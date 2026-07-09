@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+    <style>
+        body { font-family: Arial, sans-serif; background:#f5f6fa; margin:0; padding:0; }
+        .wrap { max-width: 420px; margin: 80px auto; background:#fff; padding: 24px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
+        h1 { margin-top:0; }
+        .row { margin: 12px 0; }
+        label { display:block; margin-bottom:6px; }
+        input { width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; }
+        button { width:100%; padding:10px; border:none; border-radius:6px; background:#2563eb; color:#fff; font-size:16px; cursor:pointer; }
+        .msg { margin: 10px 0; padding:10px; border-radius:6px; background:#fff7ed; border:1px solid #fed7aa; }
+        a { color:#2563eb; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <h1>Trails Login</h1>
+
+    <div th:if="${param.error}" class="msg">
+        Invalid username or password.
+    </div>
+    <div th:if="${param.logout}" class="msg">
+        You have been logged out.
+    </div>
+
+    <form th:action="@{/login}" method="post">
+        <div class="row">
+            <label for="username">Username</label>
+            <input id="username" name="username" type="text" autocomplete="username" required />
+        </div>
+        <div class="row">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" required />
+        </div>
+        <div class="row">
+            <button type="submit">Sign in</button>
+        </div>
+    </form>
+
+    <p style="margin-top:18px; font-size: 13px; color:#555;">
+        Demo accounts:<br/>
+        Admin: <b>admin</b> / <b>admin123</b><br/>
+        User: <b>user</b> / <b>user123</b>
+    </p>
+</div>
+</body>
+</html>
+

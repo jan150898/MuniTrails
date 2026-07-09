@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Landing</title>
+    <style>
+        body { font-family: Arial, sans-serif; background:#f5f6fa; margin:0; padding:0; }
+        .wrap { max-width: 700px; margin: 60px auto; background:#fff; padding: 24px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
+        .actions { margin-top: 18px; display:flex; gap: 12px; flex-wrap: wrap; }
+        a.btn, button.btn { display:inline-block; padding:10px 14px; border-radius: 8px; text-decoration:none; }
+        a.btn { background:#2563eb; color:#fff; }
+        form { margin:0; }
+        button.btn { background:#ef4444; color:#fff; border:none; cursor:pointer; }
+        h2 { margin-top:0; }
+        .pill { display:inline-block; padding:6px 10px; background:#eef2ff; color:#3730a3; border-radius: 999px; font-size: 13px; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <h2>Welcome to Trails</h2>
+    <div>Login successful.</div>
+
+    <div style="margin-top:12px;">
+        Username: <span class="pill" th:text="${#authentication?.name}"></span>
+    </div>
+
+    <div class="actions">
+        <a class="btn" th:href="@{/admin}" style="background:#4b5563;">Admin Page</a>
+        <a class="btn" th:href="@{/}" >Home</a>
+        <form th:action="@{/logout}" method="post">
+            <button class="btn" type="submit">Logout</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>
+
