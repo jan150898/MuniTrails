@@ -1,0 +1,64 @@
+# ------------------------------
+# Maven / Java
+# ------------------------------
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Maven build artifacts (sometimes)
+pom.xml.tag
+
+# Compiled class files
+*.class
+
+# ------------------------------
+# Spring / application runtime
+# ------------------------------
+# Local environment files (keep .env.example)
+.env
+.env.*
+!.env.example
+
+# ------------------------------
+# Logs
+# ------------------------------
+*.log
+
+# ------------------------------
+# IDEs
+# ------------------------------
+# VS Code
+.vscode/
+# If you want to keep workspace settings, uncomment the next line instead:
+# !.vscode/settings.json
+
+# IntelliJ
+*.iml
+.idea/
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# ------------------------------
+# OS / misc
+# ------------------------------
+.DS_Store
+Thumbs.db
+
+# ------------------------------
+# Python (garmin-service)
+# ------------------------------
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.ruff_cache/
+**/.mypy_cache/
+**/.venv/
+**/venv/
+
+# ------------------------------
+# Docker
+# ------------------------------
+**/.docker/
+

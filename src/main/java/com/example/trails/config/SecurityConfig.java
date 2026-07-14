@@ -1,6 +1,7 @@
 package com.example.trails.config;
 
-import com.example.trails.security.CustomUserDetailsService;
+import com.example.trails.security.DbUserDetailsService;
+
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +24,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public DaoAuthenticationProvider daoAuthenticationProvider(CustomUserDetailsService uds, PasswordEncoder encoder) {
+    public DaoAuthenticationProvider daoAuthenticationProvider(DbUserDetailsService uds, PasswordEncoder encoder) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(uds);
         provider.setPasswordEncoder(encoder);

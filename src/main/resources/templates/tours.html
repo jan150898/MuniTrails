@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muni Trails - Explore Tours</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .navbar-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-brand-text {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: white;
+            letter-spacing: 1px;
+            text-decoration: none;
+        }
+
+        .navbar-brand-text:hover {
+            color: white;
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,0.9) !important;
+            font-weight: 500;
+            transition: color 0.3s;
+            margin-left: 15px;
+        }
+
+        .nav-link:hover {
+            color: white !important;
+        }
+
+        .nav-link.active {
+            color: white !important;
+            border-bottom: 2px solid white;
+            padding-bottom: 3px;
+        }
+
+        .nav-link-logout {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            font-size: 1rem;
+        }
+
+        #map {
+            height: 500px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .filter-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .filter-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-label {
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .filter-input,
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+
+        .filter-input:focus,
+        .filter-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn-filter {
+            padding: 8px 24px;
+            background-color: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn-filter:hover {
+            background-color: #764ba2;
+        }
+
+        .btn-reset {
+            padding: 8px 24px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn-reset:hover {
+            background-color: #545b62;
+        }
+
+        .tour-list-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .tour-list-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .tour-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .tour-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .tour-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .tour-attributes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            font-size: 0.9rem;
+        }
+
+        .tour-attribute {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tour-attribute-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f0f0f0;
+            border-radius: 50%;
+            font-size: 0.8rem;
+        }
+
+        .tour-attribute-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .tour-attribute-value {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .ride-again-badge {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background-color: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination button.active {
+            background-color: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .slider-container {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .slider-group {
+            flex: 1;
+        }
+
+        .slider-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        input[type="range"] {
+            width: 100%;
+        }
+
+        .slider-value {
+            display: block;
+            margin-top: 4px;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .container-main {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        /* Modal */
+        .modal-content {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .modal-title {
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+        <div class="container-fluid">
+            <a class="navbar-brand-text" href="/landing">🏔️ Muni Trails</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" id="nav-home" href="/landing">🏠 Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="nav-explore" href="/tours">🔍 Explore Tours</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="nav-upload" href="/upload">📤 Upload Tour</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="nav-profile" href="/profile">👤 My Profile</a>
+                    </li>
+                    <li class="nav-item">
+                        <form method="POST" action="/logout" style="display:inline;">
+                            <button type="submit" class="nav-link nav-link-logout">🚪 Logout</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-main">
+        <!-- Map Section -->
+        <div id="map"></div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div class="filter-title">🔍 Advanced Tour Filters</div>
+            </div>
+            
+            <!-- Tour Type Filter -->
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label">🚴 Tour Type</label>
+                    <select id="tourType" class="filter-select">
+                        <option value="">All Types</option>
+                        <option value="TOUR">Tour</option>
+                        <option value="TRAIL">Trail</option>
+                        <option value="UPHILL">Uphill</option>
+                        <option value="DOWNHILL">Downhill</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Distance Filter -->
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label">📏 Distance (km)</label>
+                    <div class="slider-container">
+                        <div class="slider-group">
+                            <label class="slider-label">Min</label>
+                            <input type="range" id="minDistance" class="filter-input" min="0" max="100" value="0">
+                            <span class="slider-value" id="minDistanceValue">0 km</span>
+                        </div>
+                        <div class="slider-group">
+                            <label class="slider-label">Max</label>
+                            <input type="range" id="maxDistance" class="filter-input" min="0" max="100" value="100">
+                            <span class="slider-value" id="maxDistanceValue">100 km</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Elevation Gain Filter -->
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label">⬆️ Elevation Gain (m)</label>
+                    <div class="slider-container">
+                        <div class="slider-group">
+                            <label class="slider-label">Min</label>
+                            <input type="range" id="minElevationGain" class="filter-input" min="0" max="5000" step="100" value="0">
+                            <span class="slider-value" id="minElevationGainValue">0 m</span>
+                        </div>
+                        <div class="slider-group">
+                            <label class="slider-label">Max</label>
+                            <input type="range" id="maxElevationGain" class="filter-input" min="0" max="5000" step="100" value="5000">
+                            <span class="slider-value" id="maxElevationGainValue">5000 m</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Highest Point Filter -->
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label">⛰️ Highest Point (m)</label>
+                    <div class="slider-container">
+                        <div class="slider-group">
+                            <label class="slider-label">Min</label>
+                            <input type="range" id="minHighestPoint" class="filter-input" min="0" max="5000" step="100" value="0">
+                            <span class="slider-value" id="minHighestPointValue">0 m</span>
+                        </div>
+                        <div class="slider-group">
+                            <label class="slider-label">Max</label>
+                            <input type="range" id="maxHighestPoint" class="filter-input" min="0" max="5000" step="100" value="5000">
+                            <span class="slider-value" id="maxHighestPointValue">5000 m</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overall Rating Filter -->
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label">⭐ Overall Rating (0-10)</label>
+                    <div class="slider-container">
+                        <div class="slider-group">
+                            <label class="slider-label">Min</label>
+                            <input type="range" id="minRating" class="filter-input" min="0" max="10" value="0">
+                            <span class="slider-value" id="minRatingValue">0 ⭐</span>
+                        </div>
+                        <div class="slider-group">
+                            <label class="slider-label">Max</label>
+                            <input type="range" id="maxRating" class="filter-input" min="0" max="10" value="10">
+                            <span class="slider-value" id="maxRatingValue">10 ⭐</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exposition Filter -->
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label">🏔️ Exposition (0-10)</label>
+                    <div class="slider-container">
+                        <div class="slider-group">
+                            <label class="slider-label">Min</label>
+                            <input type="range" id="minExposition" class="filter-input" min="0" max="10" value="0">
+                            <span class="slider-value" id="minExpositionValue">0</span>
+                        </div>
+                        <div class="slider-group">
+                            <label class="slider-label">Max</label>
+                            <input type="range" id="maxExposition" class="filter-input" min="0" max="10" value="10">
+                            <span class="slider-value" id="maxExpositionValue">10</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ride Again Filter -->
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label">🔄 Ride Again</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="rideAgainYes" value="true">
+                        <label for="rideAgainYes" style="margin: 0; cursor: pointer;">Worth Riding Again</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="filter-buttons">
+                <button class="btn-filter" onclick="applyFilters()">🔎 Apply Filters</button>
+                <button class="btn-reset" onclick="resetFilters()">↺ Reset All</button>
+            </div>
+        </div>
+
+        <!-- Tour List Section -->
+        <div class="tour-list-container">
+            <div class="tour-list-title">📋 Available Tours</div>
+            <div id="tourList"></div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div class="modal fade" id="uploadModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Upload Tour from GPX</h5>
+                    <button type="button" class="btn-close" style="filter: invert(1);" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="uploadForm">
+                        <div class="mb-3">
+                            <label class="form-label" style="font-weight: 600;">GPX File</label>
+                            <input type="file" id="gpxFileInputModal" class="form-control" accept=".gpx" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" style="font-weight: 600;">Tour Name</label>
+                            <input type="text" id="tourName" class="form-control" placeholder="Enter tour name (optional)">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" style="font-weight: 600;">Tour Type *</label>
+                            <select id="tourType" class="form-select" required>
+                                <option value="">Select type</option>
+                                <option value="TOUR">Tour</option>
+                                <option value="TRAIL">Trail</option>
+                                <option value="UPHILL">Uphill</option>
+                                <option value="DOWNHILL">Downhill</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" style="font-weight: 600;">Description</label>
+                            <textarea id="description" class="form-control" rows="3" placeholder="Describe your tour..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;" onclick="submitGpxUpload()">Upload Tour</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.js"></script>
+
+    <script>
+        let map;
+        let currentMarkers = [];
+        let currentPage = 0;
+        const pageSize = 10;
+        let totalPages = 0;
+        let allTours = [];
+        let filteredTours = [];
+
+        function initMap() {
+            map = L.map('map').setView([47.3, 8.5], 8);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            loadTours();
+            setupSliderListeners();
+        }
+
+        function setupSliderListeners() {
+            document.getElementById('minDistance').addEventListener('input', function() {
+                document.getElementById('minDistanceValue').textContent = this.value + ' km';
+            });
+            document.getElementById('maxDistance').addEventListener('input', function() {
+                document.getElementById('maxDistanceValue').textContent = this.value + ' km';
+            });
+            document.getElementById('minElevationGain').addEventListener('input', function() {
+                document.getElementById('minElevationGainValue').textContent = this.value + ' m';
+            });
+            document.getElementById('maxElevationGain').addEventListener('input', function() {
+                document.getElementById('maxElevationGainValue').textContent = this.value + ' m';
+            });
+            document.getElementById('minHighestPoint').addEventListener('input', function() {
+                document.getElementById('minHighestPointValue').textContent = this.value + ' m';
+            });
+            document.getElementById('maxHighestPoint').addEventListener('input', function() {
+                document.getElementById('maxHighestPointValue').textContent = this.value + ' m';
+            });
+            document.getElementById('minRating').addEventListener('input', function() {
+                document.getElementById('minRatingValue').textContent = this.value + ' ⭐';
+            });
+            document.getElementById('maxRating').addEventListener('input', function() {
+                document.getElementById('maxRatingValue').textContent = this.value + ' ⭐';
+            });
+            document.getElementById('minExposition').addEventListener('input', function() {
+                document.getElementById('minExpositionValue').textContent = this.value;
+            });
+            document.getElementById('maxExposition').addEventListener('input', function() {
+                document.getElementById('maxExpositionValue').textContent = this.value;
+            });
+        }
+
+        function loadTours() {
+            fetch('/api/v1/tracks/paginated?page=' + currentPage + '&size=' + pageSize)
+                .then(response => response.json())
+                .then(data => {
+                    allTours = data.content;
+                    totalPages = data.totalPages;
+                    filteredTours = [...allTours];
+                    renderTours(allTours);
+                    renderPagination(data.totalPages, currentPage);
+                    updateMap(allTours);
+                })
+                .catch(error => console.error('Error loading tours:', error));
+        }
+
+        function renderTours(tours) {
+            const tourList = document.getElementById('tourList');
+            if (tours.length === 0) {
+                tourList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🗺️</div><p>No tours found matching your criteria</p></div>';
+                return;
+            }
+
+            tourList.innerHTML = tours.map(tour => `
+                <div class="tour-card" onclick="selectTour('${tour.id}')">
+                    <div class="tour-name">${escapeHtml(tour.name)}</div>
+                    <div class="tour-attributes">
+                        <div class="tour-attribute">
+                            <div class="tour-attribute-icon">📏</div>
+                            <div>
+                                <span class="tour-attribute-label">Distance</span>
+                                <div class="tour-attribute-value">${(tour.distanceMeters / 1000).toFixed(1)} km</div>
+                            </div>
+                        </div>
+                        <div class="tour-attribute">
+                            <div class="tour-attribute-icon">⬆️</div>
+                            <div>
+                                <span class="tour-attribute-label">Elevation</span>
+                                <div class="tour-attribute-value">${tour.elevationGainMeters.toFixed(0)} m</div>
+                            </div>
+                        </div>
+                        <div class="tour-attribute">
+                            <div class="tour-attribute-icon">⛰️</div>
+                            <div>
+                                <span class="tour-attribute-label">Highest</span>
+                                <div class="tour-attribute-value">${(tour.highestPointAltitude || 0).toFixed(0)} m</div>
+                            </div>
+                        </div>
+                        <div class="tour-attribute">
+                            <div class="tour-attribute-icon">⭐</div>
+                            <div>
+                                <span class="tour-attribute-label">Rating</span>
+                                <div class="tour-attribute-value">${tour.overallRating}/10</div>
+                            </div>
+                        </div>
+                        <div class="tour-attribute">
+                            <div class="tour-attribute-icon">🏔️</div>
+                            <div>
+                                <span class="tour-attribute-label">Exposition</span>
+                                <div class="tour-attribute-value">${tour.exposition}/10</div>
+                            </div>
+                        </div>
+                        <div class="tour-attribute">
+                            <div class="tour-attribute-icon">📍</div>
+                            <div>
+                                <span class="tour-attribute-label">Type</span>
+                                <div class="tour-attribute-value">${tour.type}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+                        ${tour.rideAgain ? '<span class="ride-again-badge">✓ Worth Riding Again</span>' : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateMap(tours) {
+            currentMarkers.forEach(marker => map.removeLayer(marker));
+            currentMarkers = [];
+
+            tours.forEach(tour => {
+                const marker = L.circleMarker([tour.startLat, tour.startLon], {
+                    radius: 6,
+                    fillColor: getColorByType(tour.type),
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).bindPopup(`<strong>${escapeHtml(tour.name)}</strong><br>Distance: ${(tour.distanceMeters / 1000).toFixed(1)} km<br>Rating: ${tour.overallRating}/10<br>Type: ${tour.type}`)
+                  .addTo(map);
+
+                currentMarkers.push(marker);
+            });
+
+            if (currentMarkers.length > 0) {
+                const group = L.featureGroup(currentMarkers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+
+        function getColorByType(type) {
+            switch (type) {
+                case 'TOUR': return '#4CAF50';
+                case 'TRAIL': return '#FF9800';
+                case 'UPHILL': return '#2196F3';
+                case 'DOWNHILL': return '#F44336';
+                default: return '#9C27B0';
+            }
+        }
+
+        function renderPagination(totalPages, currentPage) {
+            const pagination = document.getElementById('pagination');
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            if (currentPage > 0) {
+                html += `<button onclick="goToPage(${currentPage - 1})">← Previous</button>`;
+            }
+
+            for (let i = 0; i < totalPages; i++) {
+                if (i === currentPage) {
+                    html += `<button class="active">${i + 1}</button>`;
+                } else {
+                    html += `<button onclick="goToPage(${i})">${i + 1}</button>`;
+                }
+            }
+
+            if (currentPage < totalPages - 1) {
+                html += `<button onclick="goToPage(${currentPage + 1})">Next →</button>`;
+            }
+
+            pagination.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            loadTours();
+            window.scrollTo(0, 0);
+        }
+
+        function applyFilters() {
+            const params = new URLSearchParams();
+            
+            const minDistance = parseFloat(document.getElementById('minDistance').value) * 1000;
+            const maxDistance = parseFloat(document.getElementById('maxDistance').value) * 1000;
+            const minElevationGain = parseFloat(document.getElementById('minElevationGain').value);
+            const maxElevationGain = parseFloat(document.getElementById('maxElevationGain').value);
+            const minHighestPoint = parseFloat(document.getElementById('minHighestPoint').value);
+            const maxHighestPoint = parseFloat(document.getElementById('maxHighestPoint').value);
+            const minRating = parseInt(document.getElementById('minRating').value);
+            const maxRating = parseInt(document.getElementById('maxRating').value);
+            const minExposition = parseInt(document.getElementById('minExposition').value);
+            const maxExposition = parseInt(document.getElementById('maxExposition').value);
+            const tourType = document.getElementById('tourType').value;
+            const rideAgain = document.getElementById('rideAgainYes').checked;
+
+            if (minDistance > 0) params.append('minDistance', minDistance);
+            if (maxDistance < 100000) params.append('maxDistance', maxDistance);
+            if (minElevationGain > 0) params.append('minElevationGain', minElevationGain);
+            if (maxElevationGain < 5000) params.append('maxElevationGain', maxElevationGain);
+            if (minHighestPoint > 0) params.append('minHighestPoint', minHighestPoint);
+            if (maxHighestPoint < 5000) params.append('maxHighestPoint', maxHighestPoint);
+            if (minRating > 0) params.append('minRating', minRating);
+            if (maxRating < 10) params.append('maxRating', maxRating);
+            if (minExposition > 0) params.append('minExposition', minExposition);
+            if (maxExposition < 10) params.append('maxExposition', maxExposition);
+            if (tourType) params.append('trackType', tourType);
+            if (rideAgain) params.append('rideAgain', 'true');
+
+            fetch('/api/v1/tracks/advanced-filter?' + params.toString())
+                .then(response => response.json())
+                .then(data => {
+                    filteredTours = data;
+                    currentPage = 0;
+                    renderTours(filteredTours);
+                    updateMap(filteredTours);
+                    renderPagination(1, 0);
+                })
+                .catch(error => console.error('Error applying filters:', error));
+        }
+
+        function resetFilters() {
+            document.getElementById('minDistance').value = 0;
+            document.getElementById('maxDistance').value = 100;
+            document.getElementById('minElevationGain').value = 0;
+            document.getElementById('maxElevationGain').value = 5000;
+            document.getElementById('minHighestPoint').value = 0;
+            document.getElementById('maxHighestPoint').value = 5000;
+            document.getElementById('minRating').value = 0;
+            document.getElementById('maxRating').value = 10;
+            document.getElementById('minExposition').value = 0;
+            document.getElementById('maxExposition').value = 10;
+            document.getElementById('tourType').value = '';
+            document.getElementById('rideAgainYes').checked = false;
+            
+            document.getElementById('minDistanceValue').textContent = '0 km';
+            document.getElementById('maxDistanceValue').textContent = '100 km';
+            document.getElementById('minElevationGainValue').textContent = '0 m';
+            document.getElementById('maxElevationGainValue').textContent = '5000 m';
+            document.getElementById('minHighestPointValue').textContent = '0 m';
+            document.getElementById('maxHighestPointValue').textContent = '5000 m';
+            document.getElementById('minRatingValue').textContent = '0 ⭐';
+            document.getElementById('maxRatingValue').textContent = '10 ⭐';
+            document.getElementById('minExpositionValue').textContent = '0';
+            document.getElementById('maxExpositionValue').textContent = '10';
+            
+            currentPage = 0;
+            loadTours();
+        }
+
+        function selectTour(tourId) {
+            window.location.href = '/tour/' + tourId;
+        }
+
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function submitGpxUpload() {
+            const fileInput = document.getElementById('gpxFileInputModal');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a GPX file');
+                return;
+            }
+            
+            const tourName = document.getElementById('tourName').value;
+            const tourType = document.getElementById('tourType').value;
+            const description = document.getElementById('description').value;
+            
+            if (!tourType) {
+                alert('Please select a tour type');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('name', tourName);
+            formData.append('type', tourType);
+            formData.append('description', description);
+            
+            fetch('/api/v1/tracks/upload-gpx', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Tour uploaded successfully!');
+                    document.getElementById('uploadForm').reset();
+                    document.getElementById('gpxFileInputModal').value = '';
+                    bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    alert('Error uploading tour');
+                }
+            })
+            .catch(error => {
+                console.error('Upload error:', error);
+                alert('Error uploading tour');
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            if (currentPath.includes('/tours')) {
+                document.getElementById('nav-explore')?.classList.add('active');
+            }
+        });
+
+        window.addEventListener('load', initMap);
+    </script>
+</body>
+</html>
