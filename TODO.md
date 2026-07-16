@@ -1,10 +1,8 @@
-# TODO
+# TrailsSpring TODO
 
-## GPX uphill/downhill section ordering fix
-- [ ] Update `GpxUploadController.detectSections()` to enforce alternating section boundaries:
-  - UH ends where DH starts (or end of tour)
-  - DH ends where UH starts (or end of tour)
-  - Allow neutral/no-op segments between DH and UH
-- [ ] Keep existing `addSectionIfMeaningful` filters to avoid noise
-- [x] Run `mvn test` to ensure the build still passes
+## Fix failing tests
+- [ ] Run `mvn test` to identify exact failing tests and stack traces.
+- [ ] Inspect failing test classes and corresponding controller logic.
+- [ ] Patch code or tests so they assert correct response shapes/fields and match validation rules.
+- [ ] Re-run `mvn test` until green.
 

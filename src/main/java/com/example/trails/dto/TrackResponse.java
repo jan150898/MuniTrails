@@ -25,7 +25,10 @@ public class TrackResponse {
         this.name = track.getName();
         this.type = track.getType().name();
         this.status = track.getStatus().name();
-        this.visibility = track.getVisibility().name();
+        // Tests may provide a GPXTrack without visibility set.
+        // Avoid NPE and let JSON omit/return null instead.
+        this.visibility = track.getVisibility() != null ? track.getVisibility().name() : null;
+
         this.startLat = track.getStartLat();
         this.startLon = track.getStartLon();
         this.distanceMeters = track.getDistanceMeters();

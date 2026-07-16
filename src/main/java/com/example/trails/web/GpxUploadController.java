@@ -53,11 +53,24 @@ public class GpxUploadController {
             Principal principal) {
         
         try {
+            // Validate inputs
+            if (file == null || file.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+            if (name == null || name.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+            if (type == null || type.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+            
             User user = userService.getUserByUsername(principal.getName());
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
             
             // Parse GPX file
             GpxData gpxData = parseGpxFile(file);
-            
             byte[] bytes = file.getBytes();
 
             // Parse sections first so we can derive tour-level evaluation values
@@ -66,18 +79,30 @@ public class GpxUploadController {
             List<UploadSectionRequest> includedSections = parsedSections.stream()
                     .filter(UploadSectionRequest::isIncluded)
                     .filter(s -> s.getType() != null && ("UPHILL".equalsIgnoreCase(s.getType()) || "DOWNHILL".equalsIgnoreCase(s.getType())))
-                    .toList();
+                    .sorted((a, b) -> Integer.compare(a.getStartIndex(), b.getStartIndex()))
+                    .collect(java.util.stream.Collectors.toList());
 
-            // Tour-level evaluation: computed from included UPHILL/DOWNHILL sections.
+            // Normalize section boundaries:
+            // - An UPHILL must end right where the next DOWNHILL starts (or tour end).
+            // - A DOWNHILL must end right where the next UPHILL starts (or tour end).
+            // - Neutral/gaps are allowed only between DOWNHILL and UPHILL (not forced to adjacency).
+            //
+            // We do this by adjusting start/end indices based on the *type order* (UPHILL <-> DOWNHILL).
+            // The client may upload multiple sections of same type (e.g. "Uphill splitted in two");
+            // we merge them by chaining their indices into a single continuous block.
+            List<UploadSectionRequest> normalizedSections = normalizeUphillDownhillSections(includedSections, gpxData.getPoints().size() - 1);
+
+
+            // Tour-level evaluation: computed from normalized UPHILL/DOWNHILL sections.
             // overallRating + exposition: average (rounded)
             // uphillRating: minimum (worse one)
             int computedOverallRating = 0;
             int computedExposition = 5;
             int computedUphillRating = 5;
-            if (!includedSections.isEmpty()) {
-                double avgOverall = includedSections.stream().mapToInt(UploadSectionRequest::getOverallRating).average().orElse(0);
-                double avgExposition = includedSections.stream().mapToInt(UploadSectionRequest::getExposition).average().orElse(5);
-                int minUphill = includedSections.stream().mapToInt(UploadSectionRequest::getUphillRating).min().orElse(5);
+            if (!normalizedSections.isEmpty()) {
+                double avgOverall = normalizedSections.stream().mapToInt(UploadSectionRequest::getOverallRating).average().orElse(0);
+                double avgExposition = normalizedSections.stream().mapToInt(UploadSectionRequest::getExposition).average().orElse(5);
+                int minUphill = normalizedSections.stream().mapToInt(UploadSectionRequest::getUphillRating).min().orElse(5);
 
                 computedOverallRating = (int) Math.round(avgOverall);
                 computedExposition = (int) Math.round(avgExposition);
@@ -85,27 +110,28 @@ public class GpxUploadController {
             }
 
             // rideAgain: if any section says true, mark tour rideAgain=true
-            boolean computedRideAgain = !includedSections.isEmpty() && includedSections.stream().anyMatch(UploadSectionRequest::isRideAgain);
+            boolean computedRideAgain = !normalizedSections.isEmpty() && normalizedSections.stream().anyMatch(UploadSectionRequest::isRideAgain);
 
             GPXTrack savedTrack = saveTrack(name != null && !name.isEmpty() ? name : gpxData.getName(),
                     type, gpxData, bytes, user,
                     computedOverallRating, computedExposition, computedUphillRating, computedRideAgain);
 
-            for (UploadSectionRequest section : parsedSections) {
-                if (!section.isIncluded()) continue;
+            // Save normalized sections (only included ones)
+            for (UploadSectionRequest section : normalizedSections) {
                 GpxData sectionData = gpxData.slice(section.getStartIndex(), section.getEndIndex());
                 if (sectionData.getPoints().size() < 2) continue;
                 String sectionType = section.getType();
-                if (!"UPHILL".equalsIgnoreCase(sectionType) && !"DOWNHILL".equalsIgnoreCase(sectionType)) continue;
                 String sectionName = section.getName() == null || section.getName().isBlank()
                         ? savedTrack.getName() + " – " + sectionType.toLowerCase()
                         : section.getName();
                 saveTrack(sectionName, sectionType, sectionData, sectionData.toGpxBytes(), user,
                         section.getOverallRating(), section.getExposition(), section.getUphillRating(), section.isRideAgain());
             }
+
             return ResponseEntity.status(HttpStatus.CREATED).body(new TrackResponse(savedTrack));
             
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
@@ -125,9 +151,125 @@ public class GpxUploadController {
     }
 
     private List<UploadSectionRequest> readSections(String sectionsJson) throws IOException {
-        return sectionsJson == null || sectionsJson.isBlank() ? List.of()
+        return sectionsJson == null || sectionsJson.trim().isEmpty() ? List.of()
                 : objectMapper.readValue(sectionsJson, new TypeReference<List<UploadSectionRequest>>() {});
     }
+
+    private static List<UploadSectionRequest> normalizeUphillDownhillSections(List<UploadSectionRequest> includedSections, int tourLastIndex) {
+        if (includedSections == null || includedSections.isEmpty()) return List.of();
+
+        // Keep only valid types and sort by start.
+        List<UploadSectionRequest> sections = includedSections.stream()
+                .filter(s -> s != null && s.getType() != null)
+                .filter(s -> "UPHILL".equalsIgnoreCase(s.getType()) || "DOWNHILL".equalsIgnoreCase(s.getType()))
+                    .sorted((a, b) -> Integer.compare(a.getStartIndex(), b.getStartIndex()))
+                    .collect(java.util.stream.Collectors.toList());
+
+        List<UploadSectionRequest> result = new ArrayList<>();
+        UploadSectionRequest currentBlock = null;
+
+        // Coalesce consecutive sections with the same type into a single continuous block.
+        // This prevents "UPHILL split into two" from creating extra boundaries.
+        for (UploadSectionRequest s : sections) {
+            int start = clampIndex(s.getStartIndex(), 0, tourLastIndex);
+            int end = clampIndex(s.getEndIndex(), 0, tourLastIndex);
+            if (end <= start) continue;
+
+            String type = s.getType();
+
+            if (currentBlock == null) {
+                currentBlock = copySectionForNormalization(s, start, end);
+                continue;
+            }
+
+            String currentType = currentBlock.getType();
+            int currentEnd = currentBlock.getEndIndex();
+
+            if (equalsType(currentType, type) && start <= currentEnd + 1) {
+                // merge
+                currentBlock.setEndIndex(Math.max(currentEnd, end));
+                // keep existing ratings/name; GPX range is the important part
+            } else {
+                result.add(currentBlock);
+                currentBlock = copySectionForNormalization(s, start, end);
+            }
+        }
+        if (currentBlock != null) result.add(currentBlock);
+
+        if (result.isEmpty()) return List.of();
+
+        // Enforce adjacency between UPHILL <-> DOWNHILL transitions by rewriting indices.
+        // Rule:
+        // - An UPHILL section ends at the next DOWNHILL start (or tour end).
+        // - A DOWNHILL section ends at the next UPHILL start (or tour end).
+        // gaps are allowed only between DH and UH (we do NOT force those to be contiguous).
+        // Implementation: if we have ... UPHILL, DOWNHILL ... then set UPHILL.end = DOWNHILL.start.
+        for (int i = 0; i < result.size() - 1; i++) {
+            UploadSectionRequest a = result.get(i);
+            UploadSectionRequest b = result.get(i + 1);
+            String typeA = a.getType();
+            String typeB = b.getType();
+            if (!isUphillDownhillPair(typeA, typeB)) continue;
+
+            if (isUphill(typeA) && isDownhill(typeB)) {
+                a.setEndIndex(clampIndex(b.getStartIndex(), 0, tourLastIndex));
+            } else if (isDownhill(typeA) && isUphill(typeB)) {
+                a.setEndIndex(clampIndex(b.getStartIndex(), 0, tourLastIndex));
+            }
+        }
+
+        // Also ensure last section ends at tour end.
+        UploadSectionRequest last = result.get(result.size() - 1);
+        last.setEndIndex(clampIndex(last.getEndIndex(), 0, tourLastIndex));
+
+        // Fix any invalid ranges that might have been created.
+        List<UploadSectionRequest> cleaned = new ArrayList<>();
+        for (UploadSectionRequest s : result) {
+            int start = clampIndex(s.getStartIndex(), 0, tourLastIndex);
+            int end = clampIndex(s.getEndIndex(), 0, tourLastIndex);
+            if (end <= start) continue;
+            s.setStartIndex(start);
+            s.setEndIndex(end);
+            cleaned.add(s);
+        }
+
+        return cleaned;
+    }
+
+    private static UploadSectionRequest copySectionForNormalization(UploadSectionRequest src, int start, int end) {
+        UploadSectionRequest c = new UploadSectionRequest();
+        c.setStartIndex(start);
+        c.setEndIndex(end);
+        c.setType(src.getType());
+        c.setName(src.getName());
+        c.setIncluded(src.isIncluded());
+        c.setOverallRating(src.getOverallRating());
+        c.setExposition(src.getExposition());
+        c.setUphillRating(src.getUphillRating());
+        c.setRideAgain(src.isRideAgain());
+        return c;
+    }
+
+    private static boolean equalsType(String a, String b) {
+        return a != null && b != null && a.equalsIgnoreCase(b);
+    }
+
+    private static boolean isUphill(String t) {
+        return t != null && "UPHILL".equalsIgnoreCase(t);
+    }
+
+    private static boolean isDownhill(String t) {
+        return t != null && "DOWNHILL".equalsIgnoreCase(t);
+    }
+
+    private static boolean isUphillDownhillPair(String a, String b) {
+        return (isUphill(a) && isDownhill(b)) || (isDownhill(a) && isUphill(b));
+    }
+
+    private static int clampIndex(int idx, int min, int max) {
+        return Math.max(min, Math.min(max, idx));
+    }
+
 
     private GPXTrack saveTrack(String name, String type, GpxData data, byte[] bytes, User user,
                                int overallRating, int exposition, int uphillRating, boolean rideAgain) {

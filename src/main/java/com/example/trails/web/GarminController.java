@@ -26,7 +26,8 @@ import java.util.List;
 @RequestMapping("/api/v1/garmin")
 public class GarminController {
 
-    private final RestTemplate rest = new RestTemplate();
+    private final RestTemplate rest;
+
     private final ObjectMapper mapper = new ObjectMapper();
     private final GPXTrackRepository trackRepo;
     private final UserService userService;
@@ -34,10 +35,12 @@ public class GarminController {
     @Value("${garmin.service.url:http://garmin-service:5000}")
     private String garminServiceUrl;
 
-    public GarminController(GPXTrackRepository trackRepo, UserService userService) {
+    public GarminController(GPXTrackRepository trackRepo, UserService userService, RestTemplate restTemplate) {
         this.trackRepo = trackRepo;
         this.userService = userService;
+        this.rest = restTemplate;
     }
+
 
     // ------------------------------------------------------------------
     // Login → returns { token }
