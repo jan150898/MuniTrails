@@ -133,18 +133,32 @@ public class GarminController {
             type = "TOUR";
         }
 
-        // 1. Fetch GPX bytes from Python service
+        // 1. Fetch GPX bytes from Python service (with token validation)
         byte[] gpxBytes;
         try {
             String url = garminServiceUrl + "/activity/" + activityId + "/gpx?token=" + token;
             ResponseEntity<byte[]> gpxResp = rest.getForEntity(url, byte[].class);
+            
+            // Check for token expiration or invalidity
+            if (gpxResp.getStatusCode().value() == 401 || gpxResp.getStatusCode().value() == 403) {
+                return ResponseEntity.status(401)
+                        .body(Map.of("error", "invalid or expired session token", "retryable", true));
+            }
+            
             if (!gpxResp.getStatusCode().is2xxSuccessful() || gpxResp.getBody() == null) {
                 return ResponseEntity.status(502).body(Map.of("error", "Failed to download GPX"));
             }
             gpxBytes = gpxResp.getBody();
         } catch (HttpClientErrorException e) {
+            // Parse error response for session token issues
+            String errorBody = e.getResponseBodyAsString();
+            if (e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403 || 
+                errorBody.contains("invalid or expired session token")) {
+                return ResponseEntity.status(401)
+                        .body(Map.of("error", "invalid or expired session token", "retryable", true));
+            }
             return ResponseEntity.status(e.getStatusCode())
-                    .body(Map.of("error", e.getResponseBodyAsString()));
+                    .body(Map.of("error", errorBody));
         } catch (Exception e) {
             return ResponseEntity.status(502).body(Map.of("error", "Garmin service unavailable: " + e.getMessage()));
         }

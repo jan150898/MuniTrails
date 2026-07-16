@@ -59,9 +59,39 @@ public class GpxUploadController {
             GpxData gpxData = parseGpxFile(file);
             
             byte[] bytes = file.getBytes();
+
+            // Parse sections first so we can derive tour-level evaluation values
+            List<UploadSectionRequest> parsedSections = readSections(sectionsJson);
+
+            List<UploadSectionRequest> includedSections = parsedSections.stream()
+                    .filter(UploadSectionRequest::isIncluded)
+                    .filter(s -> s.getType() != null && ("UPHILL".equalsIgnoreCase(s.getType()) || "DOWNHILL".equalsIgnoreCase(s.getType())))
+                    .toList();
+
+            // Tour-level evaluation: computed from included UPHILL/DOWNHILL sections.
+            // overallRating + exposition: average (rounded)
+            // uphillRating: minimum (worse one)
+            int computedOverallRating = 0;
+            int computedExposition = 5;
+            int computedUphillRating = 5;
+            if (!includedSections.isEmpty()) {
+                double avgOverall = includedSections.stream().mapToInt(UploadSectionRequest::getOverallRating).average().orElse(0);
+                double avgExposition = includedSections.stream().mapToInt(UploadSectionRequest::getExposition).average().orElse(5);
+                int minUphill = includedSections.stream().mapToInt(UploadSectionRequest::getUphillRating).min().orElse(5);
+
+                computedOverallRating = (int) Math.round(avgOverall);
+                computedExposition = (int) Math.round(avgExposition);
+                computedUphillRating = minUphill;
+            }
+
+            // rideAgain: if any section says true, mark tour rideAgain=true
+            boolean computedRideAgain = !includedSections.isEmpty() && includedSections.stream().anyMatch(UploadSectionRequest::isRideAgain);
+
             GPXTrack savedTrack = saveTrack(name != null && !name.isEmpty() ? name : gpxData.getName(),
-                    type, gpxData, bytes, user, 0, 5, 5, false);
-            for (UploadSectionRequest section : readSections(sectionsJson)) {
+                    type, gpxData, bytes, user,
+                    computedOverallRating, computedExposition, computedUphillRating, computedRideAgain);
+
+            for (UploadSectionRequest section : parsedSections) {
                 if (!section.isIncluded()) continue;
                 GpxData sectionData = gpxData.slice(section.getStartIndex(), section.getEndIndex());
                 if (sectionData.getPoints().size() < 2) continue;
@@ -206,23 +236,69 @@ public class GpxUploadController {
         data.setLowestPoint(lowestPoint);
     }
 
-    /** Finds sustained elevation changes. Small fluctuations are deliberately ignored. */
+    /**
+     * Finds sustained elevation changes.
+     * Small fluctuations are deliberately ignored.
+     *
+     * Ordering rule (requested):
+     * - An uphill section ends when a downhill starts (or at tour end).
+     * - A downhill section ends when an uphill starts (or at tour end).
+     * - Between DH and UH we may have "nothing" (neutral/no direction) segments.
+     */
     static List<UploadSectionRequest> detectSections(GpxData data) {
         List<UploadSectionRequest> sections = new ArrayList<>();
         List<TrackPoint> points = data.getPoints();
-        int start = -1, direction = 0;
+
+        // state: current direction we are in
+        //  1 => uphill, -1 => downhill, 0 => neutral/nothing
+        int currentDirection = 0;
+        int currentStartIndex = -1;
+
         for (int i = 1; i < points.size(); i++) {
-            double change = points.get(i).getElevation() - points.get(i - 1).getElevation();
-            int nextDirection = change > 2.0 ? 1 : change < -2.0 ? -1 : 0;
-            if (nextDirection == 0) continue;
-            if (direction == 0) { direction = nextDirection; start = i - 1; continue; }
-            if (direction != nextDirection) {
-                addSectionIfMeaningful(sections, points, start, i - 1, direction);
-                direction = nextDirection;
-                start = i - 1;
+            TrackPoint prev = points.get(i - 1);
+            TrackPoint curr = points.get(i);
+            double change = curr.getElevation() - prev.getElevation();
+
+            // Make direction threshold dependent on distance between the two points.
+            // This reduces false positives for very short segments (GPS noise) and
+            // reacts appropriately on longer segments where real climbs/descents occur.
+            double distanceMeters = haversineDistance(prev.getLat(), prev.getLon(), curr.getLat(), curr.getLon()) * 1000.0;
+            // More sensitive: 0.3m base + 1.0x factor (was 0.5m + 1.5x), catches smaller changes
+            double metersThreshold = 0.3 + (distanceMeters / 1000.0) * 1.0;
+
+            int nextDirection = change > metersThreshold ? 1 : change < -metersThreshold ? -1 : 0;
+
+            // Neutral => close any active section and go to NONE.
+            if (nextDirection == 0) {
+                if (currentDirection != 0) {
+                    addSectionIfMeaningful(sections, points, currentStartIndex, i - 1, currentDirection);
+                    currentDirection = 0;
+                    currentStartIndex = -1;
+                }
+                continue;
+            }
+
+            // Non-neutral:
+            // If we were neutral, start a new section.
+            if (currentDirection == 0) {
+                currentDirection = nextDirection;
+                currentStartIndex = i - 1;
+                continue;
+            }
+
+            // If direction changes, close the previous section and start the new one.
+            if (currentDirection != nextDirection) {
+                addSectionIfMeaningful(sections, points, currentStartIndex, i - 1, currentDirection);
+                currentDirection = nextDirection;
+                currentStartIndex = i - 1;
             }
         }
-        if (direction != 0) addSectionIfMeaningful(sections, points, start, points.size() - 1, direction);
+
+        // Close active section at end of tour.
+        if (currentDirection != 0) {
+            addSectionIfMeaningful(sections, points, currentStartIndex, points.size() - 1, currentDirection);
+        }
+
         return sections;
     }
 
@@ -241,7 +317,8 @@ public class GpxUploadController {
         double distance = 0;
         for (int i = start + 1; i <= end; i++) distance += haversineDistance(
                 points.get(i - 1).getLat(), points.get(i - 1).getLon(), points.get(i).getLat(), points.get(i).getLon()) * 1000;
-        if (Math.abs(elevation) < 100 || distance < 250) return;
+        // More sensitive thresholds: 50m elevation over 150m distance (was 100m over 250m)
+        if (Math.abs(elevation) < 50 || distance < 150) return;
         UploadSectionRequest section = new UploadSectionRequest();
         section.setStartIndex(start);
         section.setEndIndex(end);

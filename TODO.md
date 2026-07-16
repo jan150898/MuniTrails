@@ -1,13 +1,10 @@
-# TODO - Difficulty (MTB Singletrail skala S0..S5)
+# TODO
 
-- [ ] Add enum type `MTBSingletrailSkala` (S0..S5) to `com.example.trails.model`
-- [ ] Add field(s) to `GPXTrack` for MTB Singletrail difficulty
-  - [ ] Ensure it supports “two different numbers too” (second field)
-- [ ] Update database schema (Flyway migration)
-  - [ ] Add column(s) to `gpx_track`
-- [ ] Update REST DTOs
-  - [ ] Add difficulty field(s) to `CreateTrackRequest`
-  - [ ] Add difficulty field(s) to `TrackResponse`
-- [ ] Update `TrackService` create/update mapping from request DTO -> entity
-- [ ] Compile + run tests / build (mvn test or mvn package)
+## GPX uphill/downhill section ordering fix
+- [ ] Update `GpxUploadController.detectSections()` to enforce alternating section boundaries:
+  - UH ends where DH starts (or end of tour)
+  - DH ends where UH starts (or end of tour)
+  - Allow neutral/no-op segments between DH and UH
+- [ ] Keep existing `addSectionIfMeaningful` filters to avoid noise
+- [x] Run `mvn test` to ensure the build still passes
 
