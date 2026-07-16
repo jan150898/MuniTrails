@@ -6,6 +6,9 @@ target/
 
 # Maven build artifacts (sometimes)
 pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.next
+release.properties
 
 # Compiled class files
 *.class
@@ -18,10 +21,15 @@ pom.xml.tag
 .env.*
 !.env.example
 
+# Crash dumps
+hs_err_pid*
+
 # ------------------------------
 # Logs
 # ------------------------------
 *.log
+logs/
+**/logs/
 
 # ------------------------------
 # IDEs
@@ -34,6 +42,8 @@ pom.xml.tag
 # IntelliJ
 *.iml
 .idea/
+# Out folder for built-in compiler
+out/
 
 # Eclipse
 .classpath
@@ -56,9 +66,17 @@ Thumbs.db
 **/.mypy_cache/
 **/.venv/
 **/venv/
+# Poetry/Pipenv environments if you use them
+.venv/
+pip-log.txt
+poetry.lock
 
 # ------------------------------
-# Docker
+# Docker & Local DBs (Crucial Additions)
 # ------------------------------
 **/.docker/
-
+# Prevent local DB data from being committed to Git
+**/pgdata/
+**/postgres-data/
+*.db
+*.sqlite
