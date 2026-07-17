@@ -47,11 +47,7 @@ public class TrackController {
     // Track endpoints
     @GetMapping("/tracks")
     public ResponseEntity<List<TrackResponse>> listTracks() {
-        List<GPXTrack> tracks = trackService.findAll();
-        List<TrackResponse> responses = tracks.stream()
-                .map(TrackResponse::new)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(trackService.findAllSummaries());
     }
 
     @GetMapping("/tracks/paginated")

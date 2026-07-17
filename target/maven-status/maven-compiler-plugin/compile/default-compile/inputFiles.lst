@@ -1,4 +1,5 @@
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\config\DataLoaderDisabled.java
+C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\config\HttpClientConfig.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\config\SecurityConfig.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\dto\CommentResponse.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\dto\CreateCommentRequest.java
@@ -7,6 +8,7 @@ C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\dto\
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\dto\UploadSectionRequest.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\model\Comment.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\model\Downhill.java
+C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\model\GarminCredential.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\model\GPXTrack.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\model\GPXTrackStatus.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\model\GPXTrackType.java
@@ -16,18 +18,23 @@ C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\mode
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\model\User.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\model\Visibility.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\repo\CommentRepository.java
+C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\repo\GarminCredentialRepository.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\repo\GPXTrackRepository.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\repo\UserRepository.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\security\CustomUserDetailsService.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\security\DbUserDetailsService.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\service\CommentService.java
+C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\service\EncryptionService.java
+C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\service\GarminCredentialService.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\service\TrackService.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\service\UserService.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\TrailsSpringApplication.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\web\AuthController.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\web\GarminController.java
+C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\web\GarminCredentialController.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\web\GpxUploadController.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\web\LandingController.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\web\ProfileController.java
+C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\web\TourPageController.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\web\TrackController.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\web\UploadPageController.java

@@ -1,7 +1,6 @@
 package com.example.trails.web;
 
 import com.example.trails.model.User;
-import com.example.trails.model.GPXTrack;
 import com.example.trails.service.UserService;
 import com.example.trails.service.TrackService;
 import com.example.trails.dto.TrackResponse;
@@ -10,7 +9,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import java.security.Principal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Controller
 public class ProfileController {
@@ -27,14 +25,7 @@ public class ProfileController {
     public String profile(Principal principal, Model model) {
         User user = userService.getUserByUsername(principal.getName());
         
-        // Get all tours created by this user
-        List<GPXTrack> userTours = trackService.findAll().stream()
-                .filter(t -> t.getCreatedBy().getId().equals(user.getId()))
-                .collect(Collectors.toList());
-        
-        List<TrackResponse> tourResponses = userTours.stream()
-                .map(TrackResponse::new)
-                .collect(Collectors.toList());
+        List<TrackResponse> tourResponses = trackService.findSummariesByCreatorId(user.getId());
         
         model.addAttribute("user", user);
         model.addAttribute("userTours", tourResponses);

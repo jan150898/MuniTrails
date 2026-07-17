@@ -1,0 +1,2 @@
+ALTER TABLE gpx_track ADD COLUMN IF NOT EXISTS difficulty_min VARCHAR(2);
+ALTER TABLE gpx_track ADD COLUMN IF NOT EXISTS difficulty_max VARCHAR(2);

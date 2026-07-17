@@ -20,7 +20,9 @@ public class GPXTrack {
     private String name;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "track_type", nullable = false, length = 32)
+    // The production schema uses the legacy `type` column.  Keep this explicit
+    // so Hibernate does not leave it null while writing the newer track_type column.
+    @Column(name = "type", nullable = false, length = 32)
     private GPXTrackType type;
 
     @Enumerated(EnumType.STRING)
@@ -32,7 +34,8 @@ public class GPXTrack {
     private Visibility visibility;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by_user_id", nullable = false)
+    // Existing installations use created_by_id; use it for all new tracks.
+    @JoinColumn(name = "created_by_id", nullable = false)
     private User createdBy;
 
     @ManyToOne(optional = true, fetch = FetchType.LAZY)
@@ -75,6 +78,12 @@ public class GPXTrack {
     private int exposition;     // 0..10
     private int uphillRating;  // 0..10
     private boolean rideAgain; // true/false (extend later to Maybe)
+
+    @Column(length = 2)
+    private String difficultyMin;
+
+    @Column(length = 2)
+    private String difficultyMax;
 
     public GPXTrack() {}
 
@@ -182,6 +191,9 @@ public class GPXTrack {
         return rideAgain;
     }
 
+    public String getDifficultyMin() { return difficultyMin; }
+    public String getDifficultyMax() { return difficultyMax; }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -261,5 +273,8 @@ public class GPXTrack {
     public void setRideAgain(boolean rideAgain) {
         this.rideAgain = rideAgain;
     }
+
+    public void setDifficultyMin(String difficultyMin) { this.difficultyMin = difficultyMin; }
+    public void setDifficultyMax(String difficultyMax) { this.difficultyMax = difficultyMax; }
 }
 

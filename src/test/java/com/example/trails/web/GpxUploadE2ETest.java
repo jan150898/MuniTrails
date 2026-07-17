@@ -8,11 +8,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -24,13 +24,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest(properties = {
-        "spring.flyway.enabled=false",
-        "spring.jpa.hibernate.ddl-auto=none",
-        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration"
-})
-
-@AutoConfigureMockMvc
+@WebMvcTest(GpxUploadController.class)
 
 @DisplayName("GPX Upload E2E Tests")
 class GpxUploadE2ETest {
@@ -92,7 +86,8 @@ class GpxUploadE2ETest {
                 "file", "test.gpx", "application/gpx+xml", validGpxBytes);
 
         MvcResult result = mockMvc.perform(multipart("/api/v1/tracks/analyze-gpx")
-                .file(file))
+                .file(file)
+                .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Test Track"))
                 .andExpect(jsonPath("$.points").isArray())
@@ -124,7 +119,8 @@ class GpxUploadE2ETest {
                 .file(file)
                 .param("name", "Test Track")
                 .param("type", "TOUR")
-                .param("description", "Test Description"))
+                .param("description", "Test Description")
+                .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Test Track"));
 
@@ -139,7 +135,8 @@ class GpxUploadE2ETest {
                 "file", "mountain.gpx", "application/gpx+xml", mountainGpxBytes);
 
         MvcResult result = mockMvc.perform(multipart("/api/v1/tracks/analyze-gpx")
-                .file(file))
+                .file(file)
+                .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Mountain Track"))
                 .andExpect(jsonPath("$.sections").isArray())
@@ -173,7 +170,8 @@ class GpxUploadE2ETest {
                 .file(file)
                 .param("name", "Mountain Track")
                 .param("type", "TOUR")
-                .param("sections", sections))
+                .param("sections", sections)
+                .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isCreated());
 
         // Should save main track + 1 section
@@ -193,7 +191,8 @@ class GpxUploadE2ETest {
         mockMvc.perform(multipart("/api/v1/tracks/upload-gpx")
                 .file(file)
                 .param("name", "Invalid")
-                .param("type", "TOUR"))
+                .param("type", "TOUR")
+                .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isBadRequest());
     }
 
@@ -205,7 +204,8 @@ class GpxUploadE2ETest {
                 "file", "test.gpx", "application/gpx+xml", validGpxBytes);
 
         mockMvc.perform(multipart("/api/v1/tracks/upload-gpx")
-                .file(file))
+                .file(file)
+                .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isBadRequest());
     }
 
@@ -217,7 +217,8 @@ class GpxUploadE2ETest {
                 "file", "test.gpx", "application/gpx+xml", validGpxBytes);
 
         MvcResult result = mockMvc.perform(multipart("/api/v1/tracks/analyze-gpx")
-                .file(file))
+                .file(file)
+                .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
                 .andReturn();
 

@@ -9,8 +9,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; }
-
-        /* ── Navbar ── */
         .navbar-custom { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 100; }
         .navbar-brand-text { font-weight: 800; font-size: 1.5rem; color: white; letter-spacing: 1px; text-decoration: none; }
         .navbar-brand-text:hover { color: white; }
@@ -18,8 +16,7 @@
         .nav-link:hover { color: white !important; }
         .nav-link.active { color: white !important; border-bottom: 2px solid white; padding-bottom: 3px; }
         .nav-link-logout { background: none; border: none; cursor: pointer; padding: 0; font-size: 1rem; }
-
-        /* ── Profile header ── */
+        
         .profile-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 20px; border-radius: 12px; margin-bottom: 40px; }
         .profile-avatar { width: 120px; height: 120px; background: rgba(255,255,255,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; margin-bottom: 20px; }
         .profile-name { font-size: 2rem; font-weight: 700; margin-bottom: 10px; }
@@ -27,12 +24,10 @@
         .stat-card { background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px; text-align: center; }
         .stat-value { font-size: 1.8rem; font-weight: 700; }
         .stat-label { font-size: 0.9rem; opacity: 0.9; margin-top: 5px; }
-
-        /* ── Section ── */
+        
         .section-title { font-size: 1.8rem; font-weight: 700; color: #333; margin-bottom: 30px; position: relative; padding-bottom: 15px; }
         .section-title::after { content: ''; position: absolute; bottom: 0; left: 0; width: 60px; height: 4px; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); border-radius: 2px; }
-
-        /* ── Tour cards ── */
+        
         .tour-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: all 0.3s; margin-bottom: 20px; }
         .tour-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(102,126,234,0.2); }
         .tour-card-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; }
@@ -48,16 +43,14 @@
         .tour-action-view { background-color: #667eea; color: white; }
         .tour-action-view:hover { background-color: #764ba2; color: white; }
         .tour-action-edit { background-color: #f0f0f0; color: #333; }
-
-        /* ── Buttons ── */
+        
         .btn-primary-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; border: none; border-radius: 50px; font-weight: 600; cursor: pointer; transition: all 0.3s; font-size: 1rem; text-decoration: none; display: inline-block; }
         .btn-primary-gradient:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(102,126,234,0.4); color: white; }
         .btn-outline-gradient { background: rgba(102,126,234,0.1); color: #667eea; padding: 12px 30px; border: 2px solid #667eea; border-radius: 50px; font-weight: 600; cursor: pointer; transition: all 0.3s; font-size: 1rem; text-decoration: none; display: inline-block; }
         .btn-outline-gradient:hover { background: rgba(102,126,234,0.2); color: #667eea; transform: translateY(-3px); }
         .btn-garmin { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 12px 30px; border: none; border-radius: 50px; font-weight: 600; cursor: pointer; transition: all 0.3s; font-size: 1rem; text-decoration: none; display: inline-block; }
         .btn-garmin:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(26,26,46,0.4); color: white; }
-
-        /* ── Garmin activity list ── */
+        
         .activity-item { border: 1px solid #e0e0e0; border-radius: 8px; padding: 14px 18px; margin-bottom: 10px; display: flex; align-items: center; gap: 16px; cursor: pointer; transition: all 0.2s; }
         .activity-item:hover { border-color: #667eea; background: #f8f8ff; }
         .activity-item.selected { border-color: #667eea; background: #f0f0ff; box-shadow: 0 0 0 2px #667eea44; }
@@ -70,30 +63,67 @@
         .activity-stats { text-align: right; font-size: 0.85rem; color: #555; }
         .activity-check { color: #667eea; font-size: 1.4rem; opacity: 0; transition: opacity 0.2s; }
         .activity-item.selected .activity-check { opacity: 1; }
-
-        /* ── Garmin wizard steps ── */
+        
         .garmin-step { display: none; }
         .garmin-step.active { display: block; }
         .step-indicator { display: flex; gap: 8px; margin-bottom: 20px; }
         .step-dot { width: 10px; height: 10px; border-radius: 50%; background: #ddd; transition: background 0.3s; }
         .step-dot.active { background: #667eea; }
         .step-dot.done { background: #764ba2; }
-
-        /* ── Layout ── */
+        
         .container-main { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
         .profile-actions { margin-top: 30px; display: flex; gap: 15px; flex-wrap: wrap; }
         .empty-state { text-align: center; padding: 60px 20px; color: #999; }
         .empty-state-icon { font-size: 3rem; margin-bottom: 15px; }
         .footer { background: #2c3e50; color: white; padding: 40px 20px; text-align: center; margin-top: 60px; }
-
-        /* ── Modal ── */
+        
         .modal-header-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px 12px 0 0; }
         .modal-content { border: none; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        
+        /* Unified Section Editor Styles */
+        .section-editor-container { background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .elevation-chart-wrapper { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .elevation-chart-wrapper h6 { margin-bottom: 10px; font-weight: 600; }
+        .elevation-chart-wrapper canvas { max-height: 300px; }
+        
+        .map-and-chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        @media (max-width: 1200px) { .map-and-chart-grid { grid-template-columns: 1fr; } }
+        
+        #sectionEditorMap { height: 350px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .map-wrapper { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .map-wrapper h6 { margin-bottom: 10px; font-weight: 600; }
+        
+        .section-legend { display: flex; gap: 15px; margin-top: 10px; font-size: 0.9rem; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-color { width: 20px; height: 20px; border-radius: 3px; }
+        .legend-uphill { background-color: #198754; }
+        .legend-downhill { background-color: #dc3545; }
+        
+        .sections-list { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .section-item { border-bottom: 1px solid #eee; padding: 15px; transition: background 0.2s; }
+        .section-item:hover { background: #f8f9fa; }
+        .section-item:last-child { border-bottom: none; }
+        .section-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .section-type-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .section-type-uphill { background: rgba(25, 135, 84, 0.2); color: #198754; }
+        .section-type-downhill { background: rgba(220, 53, 69, 0.2); color: #dc3545; }
+        .section-item-buttons { display: flex; gap: 8px; }
+        .section-item-btn { padding: 6px 12px; border: none; border-radius: 4px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; }
+        .btn-edit-section { background: #667eea; color: white; }
+        .btn-edit-section:hover { background: #764ba2; }
+        .btn-delete-section { background: #dc3545; color: white; }
+        .btn-delete-section:hover { background: #c82333; }
+        
+        .attribute-group { margin-bottom: 15px; }
+        .attribute-group label { font-weight: 600; font-size: 0.95rem; margin-bottom: 8px; display: block; }
+        .attribute-group input, .attribute-group select, .attribute-group textarea { width: 100%; }
+        .attribute-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .attribute-row.full { grid-template-columns: 1fr; }
     </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════ NAVBAR ══════════════════════════════ -->
+<!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
     <div class="container-fluid">
         <a class="navbar-brand-text" href="/landing">🏔️ Muni Trails</a>
@@ -102,9 +132,9 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" id="nav-home"    href="/landing">🏠 Home</a></li>
+                <li class="nav-item"><a class="nav-link" id="nav-home" href="/landing">🏠 Home</a></li>
                 <li class="nav-item"><a class="nav-link" id="nav-explore" href="/tours">🔍 Explore Tours</a></li>
-                <li class="nav-item"><a class="nav-link" id="nav-upload"  href="/upload">📤 Upload Tour</a></li>
+                <li class="nav-item"><a class="nav-link" id="nav-upload" href="/upload">📤 Upload Tour</a></li>
                 <li class="nav-item"><a class="nav-link" id="nav-profile" href="/profile">👤 My Profile</a></li>
                 <li class="nav-item">
                     <form method="POST" action="/logout" style="display:inline;">
@@ -116,10 +146,8 @@
     </div>
 </nav>
 
-<!-- ══════════════════════════════ MAIN ══════════════════════════════ -->
+<!-- MAIN -->
 <div class="container-main">
-
-    <!-- Profile header -->
     <div class="profile-header">
         <div class="profile-avatar">👤</div>
         <div class="profile-name" th:text="${user.username}">Username</div>
@@ -140,32 +168,28 @@
         </div>
     </div>
 
-    <!-- Action buttons -->
     <div class="profile-actions">
         <button class="btn-primary-gradient" data-bs-toggle="modal" data-bs-target="#uploadModal">📤 Upload GPX</button>
-        <button class="btn-garmin"           data-bs-toggle="modal" data-bs-target="#garminModal">🔗 Import from Garmin</button>
-        <a      class="btn-outline-gradient" href="/tours">🔍 Explore All Tours</a>
+        <button class="btn-garmin" data-bs-toggle="modal" data-bs-target="#garminModal">🔗 Import from Garmin</button>
+        <a class="btn-outline-gradient" href="/tours">🔍 Explore All Tours</a>
     </div>
 
-    <!-- My tours -->
     <div style="margin-top: 60px;">
         <h2 class="section-title">My Tours</h2>
-
         <div th:if="${userTours.isEmpty()}">
             <div class="empty-state">
                 <div class="empty-state-icon">🗺️</div>
                 <div style="font-size:1.1rem; margin-bottom:30px;">No tours uploaded yet</div>
                 <p>Upload a GPX file or import directly from Garmin Connect!</p>
                 <button class="btn-primary-gradient" style="margin-right:10px;" data-bs-toggle="modal" data-bs-target="#uploadModal">📤 Upload GPX</button>
-                <button class="btn-garmin"           data-bs-toggle="modal" data-bs-target="#garminModal">🔗 Import from Garmin</button>
+                <button class="btn-garmin" data-bs-toggle="modal" data-bs-target="#garminModal">🔗 Import from Garmin</button>
             </div>
         </div>
-
         <div th:if="${!userTours.isEmpty()}">
             <div th:each="tour : ${userTours}" class="tour-card">
                 <div class="tour-card-header">
                     <div class="tour-card-title" th:text="${tour.name}">Tour Name</div>
-                    <div class="tour-card-type"  th:text="${tour.type}">TOUR</div>
+                    <div class="tour-card-type" th:text="${tour.type}">TOUR</div>
                 </div>
                 <div class="tour-card-body">
                     <div class="tour-metric">
@@ -198,7 +222,171 @@
     </div>
 </div>
 
-<!-- ══════════════════════════ GPX UPLOAD MODAL ══════════════════════════ -->
+<!-- UNIFIED UPLOAD/IMPORT MODAL -->
+<div class="modal fade" id="sectionEditorModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gradient">
+                <h5 class="modal-title">📊 Edit Track & Sections</h5>
+                <button type="button" class="btn-close" style="filter:invert(1);" data-bs-dismiss="modal" onclick="resetSectionEditor()"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Track Attributes -->
+                <div class="section-editor-container">
+                    <h5 class="mb-3">Track Attributes</h5>
+                    <div class="attribute-row">
+                        <div class="attribute-group">
+                            <label>Tour Name *</label>
+                            <input type="text" id="tourName" class="form-control" placeholder="Enter tour name" required>
+                        </div>
+                        <div class="attribute-group">
+                            <label>Tour Type *</label>
+                            <select id="tourType" class="form-select" required>
+                                <option value="">Select type</option>
+                                <option value="TOUR">Tour</option>
+                                <option value="TRAIL">Trail</option>
+                                <option value="UPHILL">Uphill</option>
+                                <option value="DOWNHILL">Downhill</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="attribute-group attribute-row full">
+                        <div>
+                            <label>Description</label>
+                            <textarea id="tourDescription" class="form-control" rows="3" placeholder="Describe your tour..."></textarea>
+                        </div>
+                    </div>
+                    <div class="attribute-row">
+                        <div class="attribute-group">
+                            <label>Visibility</label>
+                            <select id="tourVisibility" class="form-select">
+                                <option value="PUBLIC">Public</option>
+                                <option value="PRIVATE">Private</option>
+                                <option value="FRIENDS">Friends Only</option>
+                            </select>
+                        </div>
+                        <div class="attribute-group">
+                            <label>Overall Rating (0-10)</label>
+                            <input type="number" id="tourOverallRating" class="form-control" min="0" max="10" value="0">
+                        </div>
+                    </div>
+                    <div class="attribute-row">
+                        <div class="attribute-group">
+                            <label>Exposition (0-10)</label>
+                            <input type="number" id="tourExposition" class="form-control" min="0" max="10" value="5">
+                        </div>
+                        <div class="attribute-group">
+                            <label>Uphill Rating (0-10)</label>
+                            <input type="number" id="tourUphillRating" class="form-control" min="0" max="10" value="5">
+                        </div>
+                    </div>
+                    <div class="attribute-row">
+                        <div class="attribute-group">
+                            <label>
+                                <input type="checkbox" id="tourRideAgain"> Would ride again
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map and Elevation Profile -->
+                <div class="map-and-chart-grid">
+                    <div class="map-wrapper">
+                        <h6>🗺️ Tour Track</h6>
+                        <small class="text-muted d-block mb-2">Green = Uphill, Red = Downhill</small>
+                        <div id="sectionEditorMap"></div>
+                        <div class="section-legend">
+                            <div class="legend-item">
+                                <div class="legend-color legend-uphill"></div>
+                                <span>Uphill Sections</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color legend-downhill"></div>
+                                <span>Downhill Sections</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="elevation-chart-wrapper">
+                        <h6>📈 Elevation Profile</h6>
+                        <small class="text-muted d-block mb-2">Colored areas show detected sections.</small>
+                        <div id="elevationChartContainer" style="position: relative; height: 300px;">
+                            <canvas id="elevationProfileChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sections List -->
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h5 class="mb-0">Sections</h5>
+                        <button type="button" class="btn btn-sm btn-primary-gradient" onclick="showAddSectionForm()">+ Add Section</button>
+                    </div>
+                    <div id="sectionsList" class="sections-list"></div>
+                </div>
+
+                <!-- Add Section Form (Hidden) -->
+                <div id="addSectionForm" class="d-none section-editor-container mt-3">
+                    <h6>New Section</h6>
+                    <div class="attribute-row">
+                        <div class="attribute-group">
+                            <label>Section Name *</label>
+                            <input type="text" id="newSectionName" class="form-control" placeholder="e.g., Climb 1">
+                        </div>
+                        <div class="attribute-group">
+                            <label>Section Type *</label>
+                            <select id="newSectionType" class="form-select">
+                                <option value="">Select type</option>
+                                <option value="UPHILL">Uphill</option>
+                                <option value="DOWNHILL">Downhill</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="attribute-row">
+                        <div class="attribute-group">
+                            <label>Start Index</label>
+                            <input type="number" id="newSectionStart" class="form-control" min="0" readonly>
+                        </div>
+                        <div class="attribute-group">
+                            <label>End Index</label>
+                            <input type="number" id="newSectionEnd" class="form-control" min="0" readonly>
+                        </div>
+                    </div>
+                    <div class="attribute-row">
+                        <div class="attribute-group">
+                            <label>Overall Rating (0-10)</label>
+                            <input type="number" id="newSectionOverallRating" class="form-control" min="0" max="10" value="0">
+                        </div>
+                        <div class="attribute-group">
+                            <label>Exposition (0-10)</label>
+                            <input type="number" id="newSectionExposition" class="form-control" min="0" max="10" value="5">
+                        </div>
+                    </div>
+                    <div class="attribute-row">
+                        <div class="attribute-group">
+                            <label>Uphill Rating (0-10)</label>
+                            <input type="number" id="newSectionUphillRating" class="form-control" min="0" max="10" value="5">
+                        </div>
+                        <div class="attribute-group">
+                            <label>
+                                <input type="checkbox" id="newSectionRideAgain"> Would ride again
+                            </label>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-success" onclick="addNewSection()">✓ Add Section</button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="hideAddSectionForm()">✗ Cancel</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="resetSectionEditor()">Cancel</button>
+                <button type="button" class="btn text-white" style="background:linear-gradient(135deg,#667eea,#764ba2);border:none;" onclick="finalizeSectionEditor()">✓ Save & Upload</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- GPX UPLOAD MODAL -->
 <div class="modal fade" id="uploadModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -209,62 +397,37 @@
             <div class="modal-body">
                 <form id="uploadForm">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">GPX File</label>
+                        <label class="form-label fw-semibold">GPX File *</label>
                         <input type="file" id="gpxFileInputModal" class="form-control" accept=".gpx" required>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Tour Name</label>
-                        <input type="text" id="tourName" class="form-control" placeholder="Enter tour name (optional)">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Tour Type *</label>
-                        <select id="tourType" class="form-select" required>
-                            <option value="">Select type</option>
-                            <option value="TOUR">Tour</option>
-                            <option value="TRAIL">Trail</option>
-                            <option value="UPHILL">Uphill</option>
-                            <option value="DOWNHILL">Downhill</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Description</label>
-                        <textarea id="description" class="form-control" rows="3" placeholder="Describe your tour..."></textarea>
-                    </div>
-                    <div id="sectionReview" class="d-none border-top pt-3">
-                        <h6>Detected uphill and downhill sections</h6>
-                        <p class="small text-muted">Review each section before saving. You can rename it, change its ratings, or remove it.</p>
-                        <div id="sectionMap" class="rounded mb-3" style="height:340px;"></div>
-                        <p class="small text-muted">Drag a section’s green start or red end handle on the map to adjust its boundaries. Handles snap to the nearest recorded point.</p>
-                        <div id="sectionList"></div>
-                    </div>
+                    <small class="text-muted">Select a GPX file to continue. You'll be able to edit the track details and sections next.</small>
                 </form>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn text-white" style="background:linear-gradient(135deg,#667eea,#764ba2);border:none;" onclick="submitGpxUpload()" id="uploadTourButton">Review sections</button>
+                <button class="btn text-white" style="background:linear-gradient(135deg,#667eea,#764ba2);border:none;" onclick="uploadGpxAndEdit()">Next →</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ══════════════════════════ GARMIN IMPORT MODAL ══════════════════════════ -->
+<!-- GARMIN IMPORT MODAL -->
 <div class="modal fade" id="garminModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header modal-header-gradient">
-                <h5 class="modal-title" id="garminModalTitle">🔗 Import from Garmin Connect</h5>
+                <h5 class="modal-title">🔗 Import from Garmin Connect</h5>
                 <button type="button" class="btn-close" style="filter:invert(1);" data-bs-dismiss="modal" onclick="garminReset()"></button>
             </div>
             <div class="modal-body">
-
-                <!-- Step progress dots -->
-                <div class="step-indicator" id="stepDots">
+                <!-- Step indicator -->
+                <div class="step-indicator">
                     <div class="step-dot active" id="dot0"></div>
-                    <div class="step-dot"        id="dot1"></div>
-                    <div class="step-dot"        id="dot2"></div>
+                    <div class="step-dot" id="dot1"></div>
+                    <div class="step-dot" id="dot2"></div>
                 </div>
 
-                <!-- ── Step 0: Login ── -->
+                <!-- Step 0: Login -->
                 <div class="garmin-step active" id="garminStep0">
                     <p class="text-muted mb-4">Enter your Garmin Connect credentials. They are sent directly to Garmin — Muni Trails never stores your password.</p>
                     <div class="mb-3">
@@ -278,16 +441,9 @@
                     <div id="garminLoginError" class="alert alert-danger d-none"></div>
                 </div>
 
-                <!-- ── Step 1: Activity list ── -->
+                <!-- Step 1: Activity list -->
                 <div class="garmin-step" id="garminStep1">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <p class="text-muted mb-0">Select activities to import. Cycling activities are highlighted.</p>
-                        <div>
-                            <label class="form-check-label me-2 small">
-                                <input type="checkbox" id="filterCycling" class="form-check-input" checked onchange="renderActivities()"> Cycling only
-                            </label>
-                        </div>
-                    </div>
+                    <p class="text-muted mb-3">Select an activity to import. Cycling activities are highlighted.</p>
                     <div id="activityList" style="max-height:380px; overflow-y:auto;"></div>
                     <div class="d-flex justify-content-between align-items-center mt-3">
                         <button class="btn btn-sm btn-outline-secondary" onclick="loadMoreActivities()">Load more</button>
@@ -295,34 +451,14 @@
                     </div>
                 </div>
 
-                <!-- ── Step 2: Configure & import ── -->
+                <!-- Step 2: Review & Edit -->
                 <div class="garmin-step" id="garminStep2">
-                    <p class="text-muted mb-3">Choose a tour type for the selected activities, then hit Import.</p>
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold">Tour Type for all imports</label>
-                        <select id="garminTourType" class="form-select">
-                            <option value="TOUR">Tour</option>
-                            <option value="TRAIL">Trail</option>
-                            <option value="UPHILL">Uphill</option>
-                            <option value="DOWNHILL">Downhill</option>
-                        </select>
-                    </div>
-                    <div id="importSummary" class="mb-3"></div>
-                    <div id="importProgress" class="d-none">
-                        <div class="progress mb-2">
-                            <div id="importProgressBar" class="progress-bar progress-bar-striped progress-bar-animated"
-                                 style="background:linear-gradient(90deg,#667eea,#764ba2); width:0%"></div>
-                        </div>
-                        <div id="importStatus" class="text-muted small text-center"></div>
-                    </div>
-                    <div id="importResults"></div>
+                    <p class="text-muted mb-3">Review the activity details. Click "Edit & Continue" to customize the track.</p>
+                    <div id="garminActivitySummary"></div>
                 </div>
-
-            </div><!-- /modal-body -->
-
-            <div class="modal-footer" id="garminFooter">
-                <!-- buttons swapped in by JS -->
             </div>
+
+            <div class="modal-footer" id="garminFooter"></div>
         </div>
     </div>
 </div>
@@ -332,223 +468,382 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// ═══════════════════════════════════════════════════════════
-// Active nav highlight
-// ═══════════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
-    if (window.location.pathname.includes('/profile'))
-        document.getElementById('nav-profile')?.classList.add('active');
-    const uploadSource = new URLSearchParams(window.location.search).get('upload');
-    if (uploadSource === 'gpx')
-        new bootstrap.Modal(document.getElementById('uploadModal')).show();
-    if (uploadSource === 'garmin')
-        new bootstrap.Modal(document.getElementById('garminModal')).show();
-});
+// Global state
+let currentTrackData = null;
+let currentSections = [];
+let elevationChartInstance = null;
+let currentEditingSource = 'gpx'; // 'gpx' or 'garmin'
+let mapInstance = null;
+let trackPolylines = {}; // Store polylines by section index
 
-// ═══════════════════════════════════════════════════════════
-// GPX Upload
-// ═══════════════════════════════════════════════════════════
-function renderElevationChart() {
-    if (!reviewedGpxPoints.length) return;
+// ══════════════════════════════════════════
+// SECTION EDITOR MODAL
+// ══════════════════════════════════════════
+
+function initializeSectionEditor(trackData, sections, source) {
+    currentTrackData = trackData;
+    currentSections = sections || [];
+    currentEditingSource = source;
+    
+    // Reset form
+    document.getElementById('tourName').value = trackData.name || '';
+    document.getElementById('tourType').value = '';
+    document.getElementById('tourDescription').value = '';
+    document.getElementById('tourVisibility').value = 'PUBLIC';
+    document.getElementById('tourOverallRating').value = '0';
+    document.getElementById('tourExposition').value = '5';
+    document.getElementById('tourUphillRating').value = '5';
+    document.getElementById('tourRideAgain').checked = false;
+    
+    renderElevationProfile();
+    renderSectionsList();
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('sectionEditorModal'));
+    modal.show();
+    
+    // Initialize map after modal is shown
+    setTimeout(() => {
+        renderTrackMap();
+    }, 500);
+}
+
+function renderElevationProfile() {
+    if (!currentTrackData || !currentTrackData.points || currentTrackData.points.length === 0) return;
     
     const distances = [];
     const elevations = [];
     let totalDist = 0;
     
-    for (let i = 0; i < reviewedGpxPoints.length; i++) {
-        const p = reviewedGpxPoints[i];
+    // Use actual elevation data
+    for (let i = 0; i < currentTrackData.points.length; i++) {
+        const p = currentTrackData.points[i];
         if (i > 0) {
-            const prev = reviewedGpxPoints[i - 1];
+            const prev = currentTrackData.points[i - 1];
             totalDist += haversineDistance(prev.lat, prev.lon, p.lat, p.lon) * 1000;
         }
-        distances.push((totalDist / 1000).toFixed(2));
-        elevations.push(p.lat ? p.lon : 0);
+        distances.push(Number((totalDist / 1000).toFixed(1)));
+        elevations.push(p.elevation || 0);
     }
     
-    const chartCanvas = document.getElementById('elevationChart');
-    if (!chartCanvas) return;
+    const ctx = document.getElementById('elevationProfileChart');
+    if (!ctx) return;
     
-    const ctx = chartCanvas.getContext('2d');
     if (elevationChartInstance) elevationChartInstance.destroy();
     
-    const sectionColors = reviewedGpxSections.map(s => s.type === 'UPHILL' ? 'rgba(25, 135, 84, 0.15)' : 'rgba(220, 53, 69, 0.15)');
-    const sectionDatasets = reviewedGpxSections.map((s, idx) => ({
-        label: `${s.type} ${idx + 1}`,
-        type: 'box',
-        data: [{xMin: distances[s.startIndex], xMax: distances[s.endIndex]}],
-        backgroundColor: s.type === 'UPHILL' ? 'rgba(25, 135, 84, 0.1)' : 'rgba(220, 53, 69, 0.1)',
-        borderColor: s.type === 'UPHILL' ? '#198754' : '#dc3545',
-        borderWidth: 2
-    }));
+    // Create datasets for each section with colors
+    const datasets = [{
+        label: 'Elevation (m)',
+        data: elevations,
+        borderColor: '#667eea',
+        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+        borderWidth: 2.5,
+        fill: true,
+        tension: 0.3,
+        pointRadius: 0,
+        pointHoverRadius: 5
+    }];
+    
+    // Add section background colors
+    currentSections.forEach((section, idx) => {
+        const sectionData = new Array(elevations.length).fill(null);
+        for (let i = section.startIndex; i <= section.endIndex && i < sectionData.length; i++) {
+            sectionData[i] = elevations[i];
+        }
+        
+        const color = section.type === 'UPHILL' ? 'rgba(25, 135, 84, 0.2)' : 'rgba(220, 53, 69, 0.2)';
+        datasets.push({
+            label: section.name,
+            data: sectionData,
+            borderWidth: 0,
+            backgroundColor: color,
+            fill: true,
+            pointRadius: 0,
+            pointHoverRadius: 0,
+            borderSkipped: false,
+            order: 2
+        });
+    });
     
     elevationChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
             labels: distances,
-            datasets: [{
-                label: 'Elevation',
-                data: elevations,
-                borderColor: '#667eea',
-                backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4,
-                pointRadius: 0,
-                pointHoverRadius: 4
-            }]
+            datasets: datasets
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false },
-                tooltip: { enabled: true, mode: 'index' }
+                legend: { display: true, position: 'top' },
+                tooltip: { enabled: true, mode: 'index', intersect: false }
             },
             scales: {
-                x: { title: { display: true, text: 'Distance (km)' } },
-                y: { title: { display: true, text: 'Elevation (m)' } }
+                x: { display: true, title: { display: true, text: 'Distance (km)' } },
+                y: { display: true, title: { display: true, text: 'Elevation (m)' } }
+            },
+            onClick: (event, activeElements) => {
+                const canvasPosition = Chart.helpers.getRelativePosition(event.native, elevationChartInstance);
+                const dataX = elevationChartInstance.scales.x.getValueForPixel(canvasPosition.x);
+                const dataY = elevationChartInstance.scales.y.getValueForPixel(canvasPosition.y);
+                console.log('Clicked at distance:', dataX, 'elevation:', dataY);
             }
         }
     });
 }
 
+function renderTrackMap() {
+    const mapEl = document.getElementById('sectionEditorMap');
+    if (!mapEl || !currentTrackData || !currentTrackData.points) return;
+    
+    // Clean up existing map
+    if (mapInstance) {
+        mapInstance.remove();
+        mapInstance = null;
+    }
+    trackPolylines = {};
+    
+    // Initialize map centered on first point
+    const firstPoint = currentTrackData.points[0];
+    mapInstance = L.map('sectionEditorMap', { scrollWheelZoom: true }).setView(
+        [firstPoint.lat, firstPoint.lon],
+        12
+    );
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+        maxZoom: 19
+    }).addTo(mapInstance);
+    
+    // Draw base track in light gray
+    const allCoords = currentTrackData.points.map(p => [p.lat, p.lon]);
+    L.polyline(allCoords, {
+        color: '#ddd',
+        weight: 2,
+        opacity: 0.5,
+        interactive: false
+    }).addTo(mapInstance);
+    
+    // Draw sections with colors
+    currentSections.forEach((section, idx) => {
+        const sectionCoords = [];
+        for (let i = section.startIndex; i <= section.endIndex && i < currentTrackData.points.length; i++) {
+            const p = currentTrackData.points[i];
+            sectionCoords.push([p.lat, p.lon]);
+        }
+        
+        if (sectionCoords.length > 0) {
+            const color = section.type === 'UPHILL' ? '#198754' : '#dc3545';
+            const weight = 5;
+            const poly = L.polyline(sectionCoords, {
+                color: color,
+                weight: weight,
+                opacity: 0.85
+            }).bindPopup(`<strong>${escHtml(section.name)}</strong><br>${section.type}`, {
+                closeButton: true
+            }).addTo(mapInstance);
+            
+            trackPolylines[idx] = poly;
+        }
+    });
+    
+    // Fit map to track bounds
+    const bounds = L.latLngBounds(allCoords);
+    mapInstance.fitBounds(bounds, { padding: [50, 50] });
+}
+
+function renderSectionsList() {
+    const list = document.getElementById('sectionsList');
+    if (currentSections.length === 0) {
+        list.innerHTML = '<p class="text-muted text-center py-3">No sections added yet. Click "Add Section" to create one.</p>';
+        return;
+    }
+    
+    list.innerHTML = currentSections.map((s, idx) => `
+        <div class="section-item">
+            <div class="section-item-header">
+                <div>
+                    <span class="section-type-badge ${s.type === 'UPHILL' ? 'section-type-uphill' : 'section-type-downhill'}">
+                        ${s.type}
+                    </span>
+                    <strong class="ms-2">${escHtml(s.name)}</strong>
+                </div>
+                <div class="section-item-buttons">
+                    <button class="section-item-btn btn-edit-section" onclick="editSection(${idx})">✏️ Edit</button>
+                    <button class="section-item-btn btn-delete-section" onclick="deleteSection(${idx})">🗑️ Delete</button>
+                </div>
+            </div>
+            <small class="text-muted">Points ${s.startIndex} to ${s.endIndex} • Rating: ${s.overallRating}/10</small>
+        </div>
+    `).join('');
+}
+
+function showAddSectionForm() {
+    document.getElementById('addSectionForm').classList.remove('d-none');
+}
+
+function hideAddSectionForm() {
+    document.getElementById('addSectionForm').classList.add('d-none');
+}
+
+function addNewSection() {
+    const name = document.getElementById('newSectionName').value.trim();
+    const type = document.getElementById('newSectionType').value;
+    const start = parseInt(document.getElementById('newSectionStart').value) || 0;
+    const end = parseInt(document.getElementById('newSectionEnd').value) || 0;
+    
+    if (!name || !type || start >= end) {
+        alert('Please fill in all fields correctly');
+        return;
+    }
+    
+    currentSections.push({
+        startIndex: start,
+        endIndex: end,
+        name: name,
+        type: type,
+        included: true,
+        overallRating: parseInt(document.getElementById('newSectionOverallRating').value) || 0,
+        exposition: parseInt(document.getElementById('newSectionExposition').value) || 5,
+        uphillRating: parseInt(document.getElementById('newSectionUphillRating').value) || 5,
+        rideAgain: document.getElementById('newSectionRideAgain').checked
+    });
+    
+    renderSectionsList();
+    hideAddSectionForm();
+}
+
+function deleteSection(idx) {
+    currentSections.splice(idx, 1);
+    renderSectionsList();
+}
+
+function editSection(idx) {
+    const s = currentSections[idx];
+    document.getElementById('newSectionName').value = s.name;
+    document.getElementById('newSectionType').value = s.type;
+    document.getElementById('newSectionStart').value = s.startIndex;
+    document.getElementById('newSectionEnd').value = s.endIndex;
+    document.getElementById('newSectionOverallRating').value = s.overallRating;
+    document.getElementById('newSectionExposition').value = s.exposition;
+    document.getElementById('newSectionUphillRating').value = s.uphillRating;
+    document.getElementById('newSectionRideAgain').checked = s.rideAgain;
+    
+    // Save edited section
+    currentSections.splice(idx, 1);
+    renderSectionsList();
+    showAddSectionForm();
+}
+
+function resetSectionEditor() {
+    currentTrackData = null;
+    currentSections = [];
+    if (elevationChartInstance) elevationChartInstance.destroy();
+    if (mapInstance) {
+        mapInstance.remove();
+        mapInstance = null;
+    }
+    trackPolylines = {};
+    document.getElementById('addSectionForm').classList.add('d-none');
+}
+
+function finalizeSectionEditor() {
+    const name = document.getElementById('tourName').value.trim();
+    const type = document.getElementById('tourType').value;
+    
+    if (!name || !type) {
+        alert('Please enter a tour name and type');
+        return;
+    }
+    
+    // Send to backend based on source
+    if (currentEditingSource === 'gpx') {
+        submitGpxUploadWithAttributes();
+    } else if (currentEditingSource === 'garmin') {
+        submitGarminImportWithAttributes();
+    }
+}
+
 function haversineDistance(lat1, lon1, lat2, lon2) {
     const R = 6371;
-    const dLat = Math.toRadians(lat2 - lat1);
-    const dLon = Math.toRadians(lon2 - lon1);
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
               Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
 }
 
-Math.toRadians = function(degrees) {
-    return degrees * Math.PI / 180;
-};
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
-async function submitGpxUpload() {
+// ══════════════════════════════════════════
+// GPX UPLOAD
+// ══════════════════════════════════════════
+
+async function uploadGpxAndEdit() {
     const file = document.getElementById('gpxFileInputModal').files[0];
     if (!file) { alert('Please select a GPX file'); return; }
-    const type = document.getElementById('tourType').value;
-    if (!type) { alert('Please select a tour type'); return; }
-
-    if (reviewedGpxSections === null) {
-        const analysis = new FormData(); analysis.append('file', file);
+    
+    try {
+        const analysis = new FormData();
+        analysis.append('file', file);
         const response = await fetch('/api/v1/tracks/analyze-gpx', { method: 'POST', body: analysis });
         if (!response.ok) { alert('Could not analyze this GPX file.'); return; }
         const data = await response.json();
-        reviewedGpxSections = data.sections || [];
-        reviewedGpxPoints = data.points || [];
-        renderSectionReview();
-        document.getElementById('sectionReview').classList.remove('d-none');
-        renderSectionMap();
-        renderElevationChart();
-        document.getElementById('uploadTourButton').textContent = 'Upload tour and selected sections';
-        return;
+        
+        // Close upload modal and show editor
+        bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+        
+        // Initialize section editor
+        initializeSectionEditor(data, data.sections || [], 'gpx');
+    } catch (e) {
+        alert('Error: ' + e.message);
     }
+}
 
+async function submitGpxUploadWithAttributes() {
+    const file = document.getElementById('gpxFileInputModal').files[0];
+    if (!file) return;
+    
     const fd = new FormData();
     fd.append('file', file);
     fd.append('name', document.getElementById('tourName').value);
-    fd.append('type', type);
-    fd.append('description', document.getElementById('description').value);
-    fd.append('sections', JSON.stringify(reviewedGpxSections));
-
-    fetch('/api/v1/tracks/upload-gpx', { method: 'POST', body: fd })
-        .then(r => {
-            if (r.ok) {
-                alert('Tour uploaded!');
-                document.getElementById('uploadForm').reset();
-                reviewedGpxSections = null;
-                bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
-                setTimeout(() => location.reload(), 800);
-            } else { alert('Upload failed'); }
-        })
-        .catch(() => alert('Upload error'));
-}
-
-function renderSectionReview() {
-    const list = document.getElementById('sectionList');
-    if (!reviewedGpxSections.length) { list.innerHTML = '<p class="text-muted small">No sustained uphill or downhill sections were detected. The tour can still be uploaded.</p>'; return; }
-    list.innerHTML = reviewedGpxSections.map((s, i) => `
-        <div class="card mb-2"><div class="card-body py-2">
-            <div class="d-flex justify-content-between align-items-center mb-2"><strong>${s.type}</strong><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSection(${i})">Remove</button></div>
-            <input class="form-control form-control-sm mb-2" value="${escHtml(s.name)}" onchange="reviewedGpxSections[${i}].name=this.value" aria-label="Section name">
-            <div class="row g-2"><div class="col"><label class="small">Overall rating</label><input type="number" min="0" max="10" class="form-control form-control-sm" value="${s.overallRating || 0}" onchange="reviewedGpxSections[${i}].overallRating=+this.value"></div>
-            <div class="col"><label class="small">Exposition</label><input type="number" min="0" max="10" class="form-control form-control-sm" value="${s.exposition || 5}" onchange="reviewedGpxSections[${i}].exposition=+this.value"></div>
-            <div class="col"><label class="small">Uphill rating</label><input type="number" min="0" max="10" class="form-control form-control-sm" value="${s.uphillRating || 5}" onchange="reviewedGpxSections[${i}].uphillRating=+this.value"></div></div>
-            <label class="form-check-label small mt-2"><input type="checkbox" class="form-check-input" ${s.rideAgain ? 'checked' : ''} onchange="reviewedGpxSections[${i}].rideAgain=this.checked"> Would ride again</label>
-        </div></div>`).join('');
-}
-function removeSection(index) { reviewedGpxSections.splice(index, 1); renderSectionReview(); renderSectionMap(); renderElevationChart(); }
-
-function renderSectionMap() {
-    if (!reviewedGpxPoints.length) return;
-    if (!sectionMapInstance) {
-        sectionMapInstance = L.map('sectionMap');
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(sectionMapInstance);
-    }
-    sectionMapLayers.forEach(layer => sectionMapInstance.removeLayer(layer));
-    sectionMapLayers = [];
-    const route = reviewedGpxPoints.map(p => [p.lat, p.lon]);
-    const base = L.polyline(route, {color:'#6c757d', weight:4, opacity:.55}).addTo(sectionMapInstance);
-    sectionMapLayers.push(base);
-    reviewedGpxSections.forEach((section, index) => {
-        const segment = route.slice(section.startIndex, section.endIndex + 1);
-        if (segment.length < 2) return;
-        const color = section.type === 'UPHILL' ? '#198754' : '#dc3545';
-        const line = L.polyline(segment, {color, weight:7, opacity:.9}).bindTooltip(`${section.name} (${section.type})`).addTo(sectionMapInstance);
-        sectionMapLayers.push(line);
-        addBoundaryHandle(index, 'startIndex', '#198754', 'Start');
-        addBoundaryHandle(index, 'endIndex', '#dc3545', 'End');
-    });
-    sectionMapInstance.fitBounds(base.getBounds(), {padding:[18,18]});
-    setTimeout(() => sectionMapInstance.invalidateSize(), 0);
-}
-
-function addBoundaryHandle(sectionIndex, field, color, label) {
-    const pointIndex = reviewedGpxSections[sectionIndex][field];
-    const point = reviewedGpxPoints[pointIndex];
-    if (!point) return;
-    const marker = L.marker([point.lat, point.lon], {draggable:true, icon:L.divIcon({className:'', html:`<span style="display:block;width:18px;height:18px;border:2px solid white;border-radius:50%;background:${color};box-shadow:0 1px 4px #333"></span>`, iconSize:[18,18], iconAnchor:[9,9]})});
-    marker.addTo(sectionMapInstance).bindTooltip(label, {permanent:true, direction:'top'});
-    marker.on('dragend', event => {
-        const at = event.target.getLatLng();
-        let closest = 0, distance = Infinity;
-        reviewedGpxPoints.forEach((candidate, i) => {
-            const d = sectionMapInstance.distance(at, L.latLng(candidate.lat, candidate.lon));
-            if (d < distance) { distance = d; closest = i; }
-        });
-        const section = reviewedGpxSections[sectionIndex];
-        section[field] = closest;
-        if (section.startIndex >= section.endIndex) {
-            if (field === 'startIndex') section.startIndex = Math.max(0, section.endIndex - 1);
-            else section.endIndex = Math.min(reviewedGpxPoints.length - 1, section.startIndex + 1);
+    fd.append('type', document.getElementById('tourType').value);
+    fd.append('description', document.getElementById('tourDescription').value);
+    fd.append('sections', JSON.stringify(currentSections));
+    
+    try {
+        const response = await fetch('/api/v1/tracks/upload-gpx', { method: 'POST', body: fd });
+        if (response.ok) {
+            alert('Tour uploaded successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('sectionEditorModal')).hide();
+            document.getElementById('uploadForm').reset();
+            setTimeout(() => location.reload(), 800);
+        } else {
+            alert('Upload failed');
         }
-        renderSectionMap();
-    });
-    sectionMapLayers.push(marker);
+    } catch (e) {
+        alert('Upload error: ' + e.message);
+    }
 }
 
-// ═══════════════════════════════════════════════════════════
-// Garmin Import Wizard
-// ═══════════════════════════════════════════════════════════
-let garminToken    = null;
-let allActivities  = [];
-let selectedIds    = new Set();
-let garminSections = {};
+// ══════════════════════════════════════════
+// GARMIN IMPORT
+// ══════════════════════════════════════════
+
+let garminToken = null;
+let allActivities = [];
+let selectedActivityId = null;
 let activitiesOffset = 0;
 const BATCH = 20;
 
-// ── Wizard step helpers ──
 function garminShowStep(n) {
     [0,1,2].forEach(i => {
         document.getElementById(`garminStep${i}`).classList.toggle('active', i === n);
-        document.getElementById(`dot${i}`).className = 'step-dot' +
-            (i < n ? ' done' : i === n ? ' active' : '');
+        document.getElementById(`dot${i}`).className = 'step-dot' + (i < n ? ' done' : i === n ? ' active' : '');
     });
     renderGarminFooter(n);
 }
@@ -558,54 +853,49 @@ function renderGarminFooter(step) {
     if (step === 0) {
         f.innerHTML = `
             <button class="btn btn-secondary" data-bs-dismiss="modal" onclick="garminReset()">Cancel</button>
-            <button class="btn text-white" style="background:linear-gradient(135deg,#667eea,#764ba2);border:none;"
-                    onclick="garminLogin()" id="btnGarminLogin">
+            <button class="btn text-white" style="background:linear-gradient(135deg,#667eea,#764ba2);border:none;" onclick="garminLogin()">
                 Connect to Garmin
             </button>`;
     } else if (step === 1) {
         f.innerHTML = `
             <button class="btn btn-secondary" onclick="garminLogout()">← Back / Logout</button>
-            <button class="btn text-white" style="background:linear-gradient(135deg,#667eea,#764ba2);border:none;"
-                    onclick="garminShowStep(2)" id="btnToImport">
-                Next: Configure Import →
+            <button class="btn text-white" style="background:linear-gradient(135deg,#667eea,#764ba2);border:none;" onclick="garminShowStep(2)">
+                Next →
             </button>`;
     } else {
         f.innerHTML = `
             <button class="btn btn-secondary" onclick="garminShowStep(1)">← Back</button>
-            <button class="btn text-white" style="background:linear-gradient(135deg,#667eea,#764ba2);border:none;"
-                    onclick="runImport()" id="btnImport">
-                📥 Import Selected
+            <button class="btn text-white" style="background:linear-gradient(135deg,#667eea,#764ba2);border:none;" onclick="garminEditAndContinue()">
+                Edit & Continue →
             </button>`;
     }
 }
 
 function garminReset() {
-    garminToken = null; allActivities = []; selectedIds.clear(); garminSections = {}; activitiesOffset = 0;
+    garminToken = null;
+    allActivities = [];
+    selectedActivityId = null;
+    activitiesOffset = 0;
     document.getElementById('garminEmail').value = '';
     document.getElementById('garminPassword').value = '';
     document.getElementById('garminLoginError').classList.add('d-none');
     document.getElementById('activityList').innerHTML = '';
-    document.getElementById('importResults').innerHTML = '';
-    document.getElementById('importProgress').classList.add('d-none');
     garminShowStep(0);
 }
 
-// Reset wizard when modal opens
-document.getElementById('garminModal').addEventListener('show.bs.modal', garminReset);
+document.getElementById('garminModal')?.addEventListener('show.bs.modal', garminReset);
 
-// ── Step 0: Login ──
 async function garminLogin() {
-    const email    = document.getElementById('garminEmail').value.trim();
+    const email = document.getElementById('garminEmail').value.trim();
     const password = document.getElementById('garminPassword').value;
-    const errBox   = document.getElementById('garminLoginError');
-    const btn      = document.getElementById('btnGarminLogin');
-
-    if (!email || !password) { showGarminError('Please enter email and password.'); return; }
-
-    btn.disabled = true;
-    btn.textContent = 'Connecting…';
-    errBox.classList.add('d-none');
-
+    const errBox = document.getElementById('garminLoginError');
+    
+    if (!email || !password) {
+        errBox.textContent = 'Please enter email and password.';
+        errBox.classList.remove('d-none');
+        return;
+    }
+    
     try {
         const r = await fetch('/api/v1/garmin/login', {
             method: 'POST',
@@ -613,29 +903,23 @@ async function garminLogin() {
             body: JSON.stringify({ email, password })
         });
         const body = await r.json();
-        if (!r.ok) { showGarminError(body.error || 'Login failed'); return; }
-
+        if (!r.ok) {
+            errBox.textContent = body.error || 'Login failed';
+            errBox.classList.remove('d-none');
+            return;
+        }
+        
         garminToken = body.token;
         activitiesOffset = 0;
         allActivities = [];
-        selectedIds.clear();
         await loadActivities();
         garminShowStep(1);
     } catch (e) {
-        showGarminError('Could not reach the Garmin service. Is it running?');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Connect to Garmin';
+        errBox.textContent = 'Could not reach Garmin service.';
+        errBox.classList.remove('d-none');
     }
 }
 
-function showGarminError(msg) {
-    const b = document.getElementById('garminLoginError');
-    b.textContent = msg;
-    b.classList.remove('d-none');
-}
-
-// ── Step 1: Load activities ──
 async function loadActivities() {
     const r = await fetch(`/api/v1/garmin/activities?token=${garminToken}&limit=${BATCH}&offset=${activitiesOffset}`);
     if (!r.ok) { alert('Failed to load activities'); return; }
@@ -650,24 +934,23 @@ async function loadMoreActivities() {
 }
 
 function renderActivities() {
-    const filterCycling = document.getElementById('filterCycling').checked;
-    const list = allActivities.filter(a => !filterCycling || a.isCycling);
+    const list = allActivities;
     const el = document.getElementById('activityList');
-
+    
     if (list.length === 0) {
-        el.innerHTML = '<p class="text-muted text-center py-4">No cycling activities found. Uncheck "Cycling only" to see all.</p>';
+        el.innerHTML = '<p class="text-muted text-center py-4">No cycling activities found.</p>';
         return;
     }
-
+    
     el.innerHTML = list.map(a => {
-        const distKm  = (a.distanceM / 1000).toFixed(1);
+        const distKm = (a.distanceM / 1000).toFixed(1);
         const durMins = Math.round(a.durationSecs / 60);
-        const elevM   = Math.round(a.elevGainM);
-        const icon    = a.isCycling ? '🚴' : '🏃';
-        const cls     = a.isCycling ? 'activity-cycling' : 'activity-other';
-        const sel     = selectedIds.has(a.id) ? 'selected' : '';
+        const elevM = Math.round(a.elevGainM);
+        const icon = a.isCycling ? '🚴' : '🏃';
+        const cls = a.isCycling ? 'activity-cycling' : 'activity-other';
+        const sel = selectedActivityId === a.id ? 'selected' : '';
         return `
-        <div class="activity-item ${cls} ${sel}" onclick="toggleActivity(${a.id})" id="act-${a.id}">
+        <div class="activity-item ${cls} ${sel}" onclick="selectActivity(${a.id})" id="act-${a.id}">
             <div class="activity-badge">${icon}</div>
             <div class="activity-info">
                 <div class="activity-name">${escHtml(a.name)}</div>
@@ -681,123 +964,61 @@ function renderActivities() {
             <div class="activity-check">✓</div>
         </div>`;
     }).join('');
-    updateSelectedCount();
+    
+    document.getElementById('selectedCount').textContent = selectedActivityId ? '1 selected' : '0 selected';
 }
 
-function toggleActivity(id) {
-    if (selectedIds.has(id)) selectedIds.delete(id);
-    else                      selectedIds.add(id);
-    const el = document.getElementById(`act-${id}`);
-    if (el) el.classList.toggle('selected', selectedIds.has(id));
-    updateSelectedCount();
+function selectActivity(id) {
+    selectedActivityId = selectedActivityId === id ? null : id;
+    renderActivities();
 }
 
-function updateSelectedCount() {
-    document.getElementById('selectedCount').textContent =
-        `${selectedIds.size} selected`;
-}
-
-// ── Step 2: Configure & Import ──
-async function garminShowStep2() {
-    if (selectedIds.size === 0) { alert('Select at least one activity first.'); return; }
-    const names = [...selectedIds].map(id => {
-        const a = allActivities.find(x => x.id === id);
-        return a ? `<li>${escHtml(a.name)} (${(a.distanceM/1000).toFixed(1)} km)</li>` : '';
-    }).join('');
-    document.getElementById('importSummary').innerHTML =
-        `<p class="fw-semibold">Analyzing ${selectedIds.size} selected activities…</p>`;
-    garminShowStep(2);
-    garminSections = {};
-    for (const id of selectedIds) {
-        const r = await fetch(`/api/v1/garmin/analyze/${id}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({token: garminToken}) });
-        const data = await r.json().catch(() => ({}));
-        garminSections[id] = data.sections || [];
+async function garminEditAndContinue() {
+    if (!selectedActivityId) { alert('Please select an activity'); return; }
+    
+    try {
+        const r = await fetch(`/api/v1/garmin/analyze/${selectedActivityId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: garminToken })
+        });
+        const data = await r.json();
+        
+        // Close garmin modal and show editor
+        bootstrap.Modal.getInstance(document.getElementById('garminModal')).hide();
+        
+        // Initialize section editor
+        initializeSectionEditor(data, data.sections || [], 'garmin');
+    } catch (e) {
+        alert('Error: ' + e.message);
     }
-    document.getElementById('importSummary').innerHTML = `<p class="fw-semibold">Activities to import (${selectedIds.size}):</p><ul>${names}</ul>` +
-        [...selectedIds].map(id => renderGarminSections(id)).join('');
 }
 
-function renderGarminSections(id) {
-    const activity = allActivities.find(a => a.id === id);
-    const sections = garminSections[id] || [];
-    const rows = sections.length ? sections.map((s, i) => `<div class="border rounded p-2 mb-2">
-        <div class="d-flex justify-content-between"><strong>${s.type}</strong><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeGarminSection(${id},${i})">Remove</button></div>
-        <input class="form-control form-control-sm my-1" value="${escHtml(s.name)}" onchange="garminSections[${id}][${i}].name=this.value">
-        <div class="row g-1"><div class="col"><input title="Overall rating" type="number" min="0" max="10" class="form-control form-control-sm" value="${s.overallRating || 0}" onchange="garminSections[${id}][${i}].overallRating=+this.value"></div><div class="col"><input title="Exposition" type="number" min="0" max="10" class="form-control form-control-sm" value="${s.exposition || 5}" onchange="garminSections[${id}][${i}].exposition=+this.value"></div><div class="col"><input title="Uphill rating" type="number" min="0" max="10" class="form-control form-control-sm" value="${s.uphillRating || 5}" onchange="garminSections[${id}][${i}].uphillRating=+this.value"></div></div>
-        <label class="form-check-label small mt-1"><input type="checkbox" class="form-check-input" ${s.rideAgain ? 'checked' : ''} onchange="garminSections[${id}][${i}].rideAgain=this.checked"> Would ride again</label>
-    </div>`).join('') : '<span class="small text-muted">No sustained sections detected.</span>';
-    return `<div class="mt-3"><h6>${escHtml(activity?.name || String(id))}</h6>${rows}</div>`;
-}
-function removeGarminSection(id, index) { garminSections[id].splice(index, 1); document.getElementById('importSummary').innerHTML = [...selectedIds].map(renderGarminSections).join(''); }
-
-// Override step button for step 1 → 2 to run the guard
-document.addEventListener('click', e => {
-    if (e.target && e.target.id === 'btnToImport') {
-        e.preventDefault();
-        garminShowStep2();
-    }
-});
-
-async function runImport() {
-    if (selectedIds.size === 0) { alert('Nothing selected'); return; }
-    const type = document.getElementById('garminTourType').value;
-    const btn  = document.getElementById('btnImport');
-    const prog = document.getElementById('importProgress');
-    const bar  = document.getElementById('importProgressBar');
-    const stat = document.getElementById('importStatus');
-    const res  = document.getElementById('importResults');
-
-    btn.disabled = true;
-    prog.classList.remove('d-none');
-    res.innerHTML = '';
-
-    const ids    = [...selectedIds];
-    let ok = 0, fail = 0;
-    const resultLines = [];
-
-    for (let i = 0; i < ids.length; i++) {
-        const id = ids[i];
-        const act = allActivities.find(a => a.id === id);
-        stat.textContent = `Importing ${i+1} of ${ids.length}: ${act ? act.name : id}…`;
-        bar.style.width = `${Math.round((i / ids.length) * 100)}%`;
-
-        try {
-            const r = await fetch(`/api/v1/garmin/import/${id}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: garminToken, type, name: act?.name || '', sections: garminSections[id] || [] })
-            });
-            if (r.ok) {
-                ok++;
-                resultLines.push(`<li class="text-success">✓ ${escHtml(act?.name || String(id))}</li>`);
-            } else {
-                const e = await r.json().catch(() => ({}));
-                fail++;
-                resultLines.push(`<li class="text-danger">✗ ${escHtml(act?.name || String(id))}: ${e.error || r.status}</li>`);
-            }
-        } catch (e) {
-            fail++;
-            resultLines.push(`<li class="text-danger">✗ ${escHtml(act?.name || String(id))}: network error</li>`);
+async function submitGarminImportWithAttributes() {
+    if (!selectedActivityId) return;
+    
+    try {
+        const r = await fetch(`/api/v1/garmin/import/${selectedActivityId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                token: garminToken,
+                type: document.getElementById('tourType').value,
+                name: document.getElementById('tourName').value,
+                sections: currentSections
+            })
+        });
+        if (r.ok) {
+            alert('Activity imported successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('sectionEditorModal')).hide();
+            garminReset();
+            setTimeout(() => location.reload(), 800);
+        } else {
+            alert('Import failed');
         }
+    } catch (e) {
+        alert('Import error: ' + e.message);
     }
-
-    bar.style.width = '100%';
-    bar.classList.remove('progress-bar-animated');
-    stat.textContent = `Done: ${ok} imported, ${fail} failed.`;
-    res.innerHTML = `<ul class="mt-2">${resultLines.join('')}</ul>`;
-    btn.textContent  = 'Done';
-    btn.disabled     = false;
-
-    if (ok > 0) {
-        document.getElementById('garminFooter').innerHTML += `
-            <button class="btn btn-success ms-2" onclick="garminFinish()">✓ View My Tours</button>`;
-    }
-}
-
-function garminFinish() {
-    garminLogout();
-    bootstrap.Modal.getInstance(document.getElementById('garminModal')).hide();
-    setTimeout(() => location.reload(), 400);
 }
 
 async function garminLogout() {
@@ -811,11 +1032,14 @@ async function garminLogout() {
     garminReset();
 }
 
-function escHtml(s) {
-    return String(s)
-        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.location.pathname.includes('/profile'))
+        document.getElementById('nav-profile')?.classList.add('active');
+});
 </script>
 </body>
 </html>

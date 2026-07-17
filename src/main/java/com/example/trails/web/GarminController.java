@@ -110,10 +110,20 @@ public class GarminController {
         try {
             ResponseEntity<byte[]> response = rest.getForEntity(
                     garminServiceUrl + "/activity/" + activityId + "/gpx?token=" + token, byte[].class);
+            if (response.getStatusCode().value() == 401 || response.getStatusCode().value() == 403) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "invalid or expired session token", "retryable", true));
+            }
             if (response.getBody() == null) return ResponseEntity.status(502).body(Map.of("error", "Failed to download GPX"));
             GpxUploadController.GpxData data = GpxUploadController.parseGpxBytes(response.getBody());
             return ResponseEntity.ok(Map.of("name", data.getName(), "points", GpxUploadController.mapPoints(data),
                     "sections", GpxUploadController.detectSections(data)));
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "invalid or expired session token", "retryable", true));
+            }
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", "Could not analyze Garmin activity"));
         } catch (Exception e) {
             return ResponseEntity.status(502).body(Map.of("error", "Could not analyze Garmin activity: " + e.getMessage()));
         }

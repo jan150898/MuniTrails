@@ -2,7 +2,6 @@ package com.example.trails.web;
 
 import com.example.trails.service.TrackService;
 import com.example.trails.dto.TrackResponse;
-import com.example.trails.model.GPXTrack;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,9 +19,8 @@ public class LandingController {
 
     @GetMapping("/landing")
     public String landing(Model model) {
-        List<GPXTrack> allTours = trackService.findAll();
+        List<TrackResponse> allTours = trackService.findAllSummaries();
         List<TrackResponse> tours = allTours.stream()
-                .map(TrackResponse::new)
                 .limit(6)
                 .collect(Collectors.toList());
         model.addAttribute("featuredTours", tours);
@@ -33,5 +31,10 @@ public class LandingController {
     @GetMapping("/")
     public String home() {
         return "redirect:/landing";
+    }
+
+    @GetMapping("/tours")
+    public String tours() {
+        return "tours";
     }
 }

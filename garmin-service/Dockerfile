@@ -15,4 +15,7 @@ COPY app.py .
 ENV PORT=5000
 EXPOSE 5000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "60", "app:app"]
+# Garmin client sessions are held in app.py's in-memory token map.  They must
+# stay in one process so that login, activity analysis, and import see the
+# same token.
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--timeout", "60", "app:app"]

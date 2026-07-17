@@ -44,34 +44,40 @@ public class GpxUploadController {
     }
 
     @PostMapping("/tracks/upload-gpx")
-    public ResponseEntity<TrackResponse> uploadGpx(
+    public ResponseEntity<?> uploadGpx(
             @RequestParam("file") MultipartFile file,
             @RequestParam("name") String name,
             @RequestParam("type") String type,
             @RequestParam(value = "description", required = false) String description,
             @RequestParam(value = "sections", required = false) String sectionsJson,
+            @RequestParam(value = "difficultyMin", required = false) String difficultyMin,
+            @RequestParam(value = "difficultyMax", required = false) String difficultyMax,
             Principal principal) {
         
         try {
             // Validate inputs
             if (file == null || file.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-            }
-            if (name == null || name.trim().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                return ResponseEntity.badRequest().body(Map.of("error", "Please select a non-empty GPX file."));
             }
             if (type == null || type.trim().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                return ResponseEntity.badRequest().body(Map.of("error", "Please select a tour type."));
             }
             
             User user = userService.getUserByUsername(principal.getName());
             if (user == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Please sign in again before uploading."));
             }
             
             // Parse GPX file
             GpxData gpxData = parseGpxFile(file);
             byte[] bytes = file.getBytes();
+            String trackName = name == null || name.trim().isEmpty() ? gpxData.getName() : name.trim();
+            if (trackName == null || trackName.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Add a tour name or use a GPX file that contains one."));
+            }
+            if (gpxData.getPoints().size() < 2) {
+                return ResponseEntity.badRequest().body(Map.of("error", "The GPX file must contain at least two track or route points."));
+            }
 
             // Parse sections first so we can derive tour-level evaluation values
             List<UploadSectionRequest> parsedSections = readSections(sectionsJson);
@@ -112,9 +118,12 @@ public class GpxUploadController {
             // rideAgain: if any section says true, mark tour rideAgain=true
             boolean computedRideAgain = !normalizedSections.isEmpty() && normalizedSections.stream().anyMatch(UploadSectionRequest::isRideAgain);
 
-            GPXTrack savedTrack = saveTrack(name != null && !name.isEmpty() ? name : gpxData.getName(),
+            GPXTrack savedTrack = saveTrack(trackName,
                     type, gpxData, bytes, user,
                     computedOverallRating, computedExposition, computedUphillRating, computedRideAgain);
+            if (applyDifficulty(savedTrack, type, difficultyMin, difficultyMax)) {
+                savedTrack = gpxTrackRepository.save(savedTrack);
+            }
 
             // Save normalized sections (only included ones)
             for (UploadSectionRequest section : normalizedSections) {
@@ -131,8 +140,8 @@ public class GpxUploadController {
             return ResponseEntity.status(HttpStatus.CREATED).body(new TrackResponse(savedTrack));
             
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Could not save this GPX file: " + safeMessage(e)));
         }
     }
 
@@ -185,8 +194,9 @@ public class GpxUploadController {
             String currentType = currentBlock.getType();
             int currentEnd = currentBlock.getEndIndex();
 
-            if (equalsType(currentType, type) && start <= currentEnd + 1) {
-                // merge
+            if (equalsType(currentType, type)) {
+                // A neutral stretch between two sections in the same direction
+                // still belongs to that climb/descent. Keep it as one track.
                 currentBlock.setEndIndex(Math.max(currentEnd, end));
                 // keep existing ratings/name; GPX range is the important part
             } else {
@@ -298,30 +308,50 @@ public class GpxUploadController {
     // Package-visible static so GarminController can reuse the same logic
     static GpxData parseGpxBytes(byte[] bytes) throws IOException, ParserConfigurationException, SAXException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
+        disableExternalEntities(factory);
         DocumentBuilder builder = factory.newDocumentBuilder();
         Document doc = builder.parse(new java.io.ByteArrayInputStream(bytes));
         GpxData data = new GpxData();
-        NodeList metadataNodes = doc.getElementsByTagName("metadata");
+        NodeList metadataNodes = elementsByLocalName(doc, "metadata");
         if (metadataNodes.getLength() > 0) {
             NodeList nameNodes = metadataNodes.item(0).getChildNodes();
             for (int i = 0; i < nameNodes.getLength(); i++) {
                 Node node = nameNodes.item(i);
-                if ("name".equals(node.getNodeName()) && node.getTextContent() != null) {
-                    data.setName(node.getTextContent());
+                if ("name".equals(localName(node)) && node.getTextContent() != null && !node.getTextContent().isBlank()) {
+                    data.setName(node.getTextContent().trim());
+                }
+            }
+        }
+        if ("Unnamed Track".equals(data.getName())) {
+            NodeList trackNames = elementsByLocalName(doc, "name");
+            for (int i = 0; i < trackNames.getLength(); i++) {
+                Node node = trackNames.item(i);
+                if (node.getTextContent() != null && !node.getTextContent().isBlank()) {
+                    data.setName(node.getTextContent().trim());
+                    break;
                 }
             }
         }
         List<TrackPoint> trackPoints = new ArrayList<>();
-        NodeList tpNodes = doc.getElementsByTagName("trkpt");
+        NodeList tpNodes = elementsByLocalName(doc, "trkpt");
+        if (tpNodes.getLength() == 0) {
+            tpNodes = elementsByLocalName(doc, "rtept");
+        }
         for (int i = 0; i < tpNodes.getLength(); i++) {
             Node trkPt = tpNodes.item(i);
-            String lat = trkPt.getAttributes().getNamedItem("lat").getTextContent();
-            String lon = trkPt.getAttributes().getNamedItem("lon").getTextContent();
+            Node latAttribute = trkPt.getAttributes().getNamedItem("lat");
+            Node lonAttribute = trkPt.getAttributes().getNamedItem("lon");
+            if (latAttribute == null || lonAttribute == null) {
+                throw new IOException("A track point is missing latitude or longitude.");
+            }
+            String lat = latAttribute.getTextContent();
+            String lon = lonAttribute.getTextContent();
             double elevation = 0;
             NodeList children = trkPt.getChildNodes();
             for (int j = 0; j < children.getLength(); j++) {
                 Node child = children.item(j);
-                if ("ele".equals(child.getNodeName()) && child.getTextContent() != null) {
+                if ("ele".equals(localName(child)) && child.getTextContent() != null) {
                     elevation = Double.parseDouble(child.getTextContent());
                 }
             }
@@ -334,6 +364,49 @@ public class GpxUploadController {
             calculateMetrics(trackPoints, data);
         }
         return data;
+    }
+
+    private static NodeList elementsByLocalName(Document doc, String name) {
+        NodeList namespaced = doc.getElementsByTagNameNS("*", name);
+        return namespaced.getLength() > 0 ? namespaced : doc.getElementsByTagName(name);
+    }
+
+    private static String localName(Node node) {
+        return node.getLocalName() == null ? node.getNodeName() : node.getLocalName();
+    }
+
+    private static void disableExternalEntities(DocumentBuilderFactory factory) throws ParserConfigurationException {
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        factory.setXIncludeAware(false);
+        factory.setExpandEntityReferences(false);
+    }
+
+    private static String safeMessage(Exception e) {
+        String message = e.getMessage();
+        return message == null || message.isBlank() ? "invalid GPX data" : message;
+    }
+
+    static boolean applyDifficulty(GPXTrack track, String type, String minimum, String maximum) {
+        if (!"TOUR".equalsIgnoreCase(type) && !"DOWNHILL".equalsIgnoreCase(type)) return false;
+        String min = difficulty(minimum);
+        String max = difficulty(maximum);
+        if (min == null && max == null) return false;
+        if (min == null) min = max;
+        if (max == null) max = min;
+        if (min.compareTo(max) > 0) throw new IllegalArgumentException("Minimum difficulty cannot exceed maximum difficulty.");
+        track.setDifficultyMin(min);
+        track.setDifficultyMax(max);
+        return true;
+    }
+
+    private static String difficulty(String value) {
+        if (value == null || value.isBlank()) return null;
+        String result = value.trim().toUpperCase();
+        if (!result.matches("S[0-5]")) throw new IllegalArgumentException("Difficulty must be S0 through S5.");
+        return result;
     }
 
     private GpxData parseGpxFile(MultipartFile file) throws IOException, ParserConfigurationException, SAXException {
@@ -372,8 +445,8 @@ public class GpxUploadController {
         }
         
         data.setDistanceMeters(totalDistance * 1000); // Convert km to m
-        data.setElevationGainMeters(elevationGain);
-        data.setElevationLossMeters(elevationLoss);
+        data.setElevationGainMeters(Math.round(elevationGain));
+        data.setElevationLossMeters(Math.round(elevationLoss));
         data.setHighestPoint(highestPoint);
         data.setLowestPoint(lowestPoint);
     }
@@ -441,13 +514,31 @@ public class GpxUploadController {
             addSectionIfMeaningful(sections, points, currentStartIndex, points.size() - 1, currentDirection);
         }
 
-        return sections;
+        return mergeConsecutiveSameDirectionSections(sections);
+    }
+
+    /**
+     * Detection closes a section when elevation briefly levels out.  If the next
+     * meaningful section has the same direction, include that flat interval in
+     * the same uphill/downhill instead of presenting two consecutive sections.
+     */
+    private static List<UploadSectionRequest> mergeConsecutiveSameDirectionSections(List<UploadSectionRequest> sections) {
+        List<UploadSectionRequest> merged = new ArrayList<>();
+        for (UploadSectionRequest section : sections) {
+            if (!merged.isEmpty() && equalsType(merged.get(merged.size() - 1).getType(), section.getType())) {
+                UploadSectionRequest previous = merged.get(merged.size() - 1);
+                previous.setEndIndex(Math.max(previous.getEndIndex(), section.getEndIndex()));
+            } else {
+                merged.add(section);
+            }
+        }
+        return merged;
     }
 
     static List<Map<String, Double>> mapPoints(GpxData data) {
         List<Map<String, Double>> result = new ArrayList<>();
         for (TrackPoint point : data.getPoints()) {
-            result.add(Map.of("lat", point.getLat(), "lon", point.getLon()));
+            result.add(Map.of("lat", point.getLat(), "lon", point.getLon(), "elevation", point.getElevation()));
         }
         return result;
     }

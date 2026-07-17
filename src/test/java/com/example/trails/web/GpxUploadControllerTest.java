@@ -137,7 +137,7 @@ class GpxUploadControllerTest {
         mockMvc.perform(
                         multipart("/api/v1/tracks/upload-gpx")
                                 .file(file)
-                                .param("name", "Test Track")
+                                .param("name", "")
                                 .param("type", "TRAIL")
 
                                 .with(SecurityMockMvcRequestPostProcessors.csrf())
@@ -179,4 +179,3 @@ class GpxUploadControllerTest {
                 .andExpect(jsonPath("$.error").exists());
     }
 }
-

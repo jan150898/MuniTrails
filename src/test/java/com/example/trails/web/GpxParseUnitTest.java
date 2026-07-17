@@ -1,5 +1,6 @@
 package com.example.trails.web;
 
+import com.example.trails.dto.UploadSectionRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 
@@ -28,6 +29,57 @@ class GpxParseUnitTest {
         assertEquals("TestTrack", data.getName());
         assertEquals(2, data.getPoints().size());
         assertTrue(data.getDistanceMeters() > 0);
+    }
+
+    @Test
+    @DisplayName("Parse namespaced GPX successfully")
+    void testParseNamespacedGpx() throws Exception {
+        byte[] gpxBytes = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+                "<gpx xmlns=\"http://www.topografix.com/GPX/1/1\" version=\"1.1\" creator=\"Test\">" +
+                "<metadata><name>Namespaced track</name></metadata><trk><trkseg>" +
+                "<trkpt lat=\"47.5\" lon=\"11.5\"><ele>500</ele></trkpt>" +
+                "<trkpt lat=\"47.501\" lon=\"11.501\"><ele>510</ele></trkpt>" +
+                "</trkseg></trk></gpx>").getBytes(StandardCharsets.UTF_8);
+
+        GpxUploadController.GpxData data = GpxUploadController.parseGpxBytes(gpxBytes);
+
+        assertEquals("Namespaced track", data.getName());
+        assertEquals(2, data.getPoints().size());
+    }
+
+    @Test
+    @DisplayName("Parse GPX route points successfully")
+    void testParseRouteGpx() throws Exception {
+        byte[] gpxBytes = ("<gpx version=\"1.1\" creator=\"Test\"><rte><name>Route</name>" +
+                "<rtept lat=\"47.5\" lon=\"11.5\"><ele>500</ele></rtept>" +
+                "<rtept lat=\"47.501\" lon=\"11.501\"><ele>510</ele></rtept>" +
+                "</rte></gpx>").getBytes(StandardCharsets.UTF_8);
+
+        GpxUploadController.GpxData data = GpxUploadController.parseGpxBytes(gpxBytes);
+
+        assertEquals("Route", data.getName());
+        assertEquals(2, data.getPoints().size());
+    }
+
+    @Test
+    @DisplayName("Merge consecutive uphill sections separated by a flat stretch")
+    void testMergeConsecutiveSameDirectionSections() throws Exception {
+        byte[] gpxBytes = ("<gpx version=\"1.1\" creator=\"Test\"><trk><trkseg>" +
+                "<trkpt lat=\"47.000\" lon=\"11.000\"><ele>0</ele></trkpt>" +
+                "<trkpt lat=\"47.001\" lon=\"11.001\"><ele>50</ele></trkpt>" +
+                "<trkpt lat=\"47.002\" lon=\"11.002\"><ele>100</ele></trkpt>" +
+                "<trkpt lat=\"47.003\" lon=\"11.003\"><ele>100</ele></trkpt>" +
+                "<trkpt lat=\"47.004\" lon=\"11.004\"><ele>150</ele></trkpt>" +
+                "<trkpt lat=\"47.005\" lon=\"11.005\"><ele>200</ele></trkpt>" +
+                "</trkseg></trk></gpx>").getBytes(StandardCharsets.UTF_8);
+
+        java.util.List<UploadSectionRequest> sections =
+                GpxUploadController.detectSections(GpxUploadController.parseGpxBytes(gpxBytes));
+
+        assertEquals(1, sections.size());
+        assertEquals("UPHILL", sections.get(0).getType());
+        assertEquals(0, sections.get(0).getStartIndex());
+        assertEquals(5, sections.get(0).getEndIndex());
     }
 
     @Test
