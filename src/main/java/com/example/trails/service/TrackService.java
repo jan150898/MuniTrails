@@ -6,6 +6,7 @@ import com.example.trails.model.GPXTrackType;
 import com.example.trails.model.Visibility;
 import com.example.trails.model.User;
 import com.example.trails.dto.TrackResponse;
+import com.example.trails.dto.UpdateTourRequest;
 import com.example.trails.repo.GPXTrackRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -119,5 +120,20 @@ public class TrackService {
 
     public void deleteTrack(UUID id) {
         gpxTrackRepository.deleteById(id);
+    }
+
+    public GPXTrack updateTourDetails(UUID trackId, UpdateTourRequest req, User user) {
+        GPXTrack track = findById(trackId);
+        
+        if (req.getName() != null) track.setName(req.getName());
+        if (req.getType() != null) track.setType(GPXTrackType.valueOf(req.getType().toUpperCase()));
+        if (req.getVisibility() != null) track.setVisibility(Visibility.valueOf(req.getVisibility().toUpperCase()));
+        track.setOverallRating(req.getOverallRating());
+        track.setExposition(req.getExposition());
+        track.setUphillRating(req.getUphillRating());
+        track.setRideAgain(req.isRideAgain());
+        track.setLastEditedBy(user);
+        
+        return gpxTrackRepository.save(track);
     }
 }

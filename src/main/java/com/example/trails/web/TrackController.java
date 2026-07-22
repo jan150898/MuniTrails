@@ -4,6 +4,8 @@ import com.example.trails.dto.CreateCommentRequest;
 import com.example.trails.dto.CreateTrackRequest;
 import com.example.trails.dto.CommentResponse;
 import com.example.trails.dto.TrackResponse;
+import com.example.trails.dto.TourDetailResponse;
+import com.example.trails.dto.UpdateTourRequest;
 import com.example.trails.model.Comment;
 import com.example.trails.model.GPXTrack;
 import com.example.trails.model.GPXTrackType;
@@ -119,6 +121,18 @@ public class TrackController {
         return ResponseEntity.ok(new TrackResponse(track));
     }
 
+    @GetMapping("/tracks/{trackId}/details")
+    public ResponseEntity<TourDetailResponse> getTourDetails(@PathVariable UUID trackId, Principal principal) {
+        User user = getCurrentUser(principal);
+        GPXTrack track = trackService.findById(trackId);
+        
+        if (!track.getCreatedBy().getId().equals(user.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
+        return ResponseEntity.ok(new TourDetailResponse(track));
+    }
+
     @PostMapping("/tracks")
     public ResponseEntity<TrackResponse> createTrack(
             @Valid @RequestBody CreateTrackRequest req,
@@ -158,6 +172,26 @@ public class TrackController {
         );
         
         return ResponseEntity.ok(new TrackResponse(track));
+    }
+
+    @PutMapping("/tracks/{trackId}/edit")
+    public ResponseEntity<TourDetailResponse> editTour(
+            @PathVariable UUID trackId,
+            @Valid @RequestBody UpdateTourRequest req,
+            Principal principal) {
+        User user = getCurrentUser(principal);
+        GPXTrack track = trackService.findById(trackId);
+        
+        if (!track.getCreatedBy().getId().equals(user.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
+        try {
+            track = trackService.updateTourDetails(trackId, req, user);
+            return ResponseEntity.ok(new TourDetailResponse(track));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
     }
 
     @DeleteMapping("/tracks/{trackId}")
@@ -214,4 +248,21 @@ public class TrackController {
         public int getCurrentPage() { return currentPage; }
         public void setCurrentPage(int currentPage) { this.currentPage = currentPage; }
     }
-}
+
+    @GetMapping("/tracks/{trackId}/download-gpx")
+    public ResponseEntity<byte[]> downloadGpx(@PathVariable UUID trackId) {
+        GPXTrack track = trackService.findById(trackId);
+        byte[] gpxData = track.getGpxFile();
+        
+        if (gpxData == null || gpxData.length == 0) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        
+        String filename = track.getName().replaceAll("[^a-zA-Z0-9._-]", "_") + ".gpx";
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
+                .header("Content-Type", "application/gpx+xml")
+                .body(gpxData);
+    }}
+
+

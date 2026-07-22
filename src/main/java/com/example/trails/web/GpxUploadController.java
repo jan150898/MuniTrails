@@ -152,7 +152,7 @@ public class GpxUploadController {
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("name", data.getName());
             result.put("points", mapPoints(data));
-            result.put("sections", detectSections(data));
+            result.put("sections", SectionDetector.detectSections(data.getPoints()));
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Could not read GPX: " + e.getMessage()));

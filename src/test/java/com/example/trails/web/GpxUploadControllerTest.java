@@ -124,7 +124,7 @@ class GpxUploadControllerTest {
 
         GPXTrack savedTrack = new GPXTrack();
         savedTrack.setName("Test Track");
-        savedTrack.setType(GPXTrackType.TRAIL);
+        savedTrack.setType(GPXTrackType.TOUR);
         savedTrack.setStatus(GPXTrackStatus.DRAFT);
         savedTrack.setVisibility(com.example.trails.model.Visibility.PUBLIC);
 
@@ -138,7 +138,7 @@ class GpxUploadControllerTest {
                         multipart("/api/v1/tracks/upload-gpx")
                                 .file(file)
                                 .param("name", "")
-                                .param("type", "TRAIL")
+                                .param("type", "TOUR")
 
                                 .with(SecurityMockMvcRequestPostProcessors.csrf())
                                 .principal(() -> "testuser")
