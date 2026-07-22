@@ -213,8 +213,8 @@
                         <div class="tour-metric-value" th:text="${#dates.format(tour.createdAt,'MMM dd, yyyy')}">Jan 01, 2024</div>
                     </div>
                     <div class="tour-actions">
-                        <a href="#" class="tour-action-btn tour-action-view">👁️ View</a>
-                        <button class="tour-action-btn tour-action-edit">✏️ Edit</button>
+                        <a href="#" class="tour-action-btn tour-action-view" onclick="viewTour(this.getAttribute('data-tour-id')); return false;" th:attr="data-tour-id=${tour.id}">👁️ View</a>
+                        <button class="tour-action-btn tour-action-edit" onclick="editTour(this.getAttribute('data-tour-id')); return false;" th:attr="data-tour-id=${tour.id}">✏️ Edit</button>
                     </div>
                 </div>
             </div>
@@ -244,7 +244,7 @@
                             <select id="tourType" class="form-select" required>
                                 <option value="">Select type</option>
                                 <option value="TOUR">Tour</option>
-                                <option value="TRAIL">Trail</option>
+                                
                                 <option value="UPHILL">Uphill</option>
                                 <option value="DOWNHILL">Downhill</option>
                             </select>
@@ -343,12 +343,36 @@
                     </div>
                     <div class="attribute-row">
                         <div class="attribute-group">
+                            <label>Start IndexDifficulty Level <small class="text-muted">(Required)</small></label>
+                            <select id="newSectionDifficulty" class="form-select">
+                                <option value="">Select difficulty</option>
+                                <option value="S0">S0 - Easy</option>
+                                <option value="S1">S1 - Beginner</option>
+                                <option value="S2">S2 - Intermediate</option>
+                                <option value="S3">S3 - Advanced</option>
+                                <option value="S4">S4 - Expert</option>
+                                <option value="S5">S5 - Pro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="attribute-row">
+                        <div class="attribute-group">
                             <label>Start Index</label>
-                            <input type="number" id="newSectionStart" class="form-control" min="0" readonly>
+                            <input type="number" id="newSectionStart" class="form-control" min="0">
                         </div>
                         <div class="attribute-group">
                             <label>End Index</label>
-                            <input type="number" id="newSectionEnd" class="form-control" min="0" readonly>
+                            <input type="number" id="newSectionEnd" class="form-control" min="0">
+                        </div>
+                    </div>
+                    <div class="attribute-row">
+                        <div class="attribute-group">
+                            <label>Start Index</label>
+                            <input type="number" id="newSectionStart" class="form-control" min="0">
+                        </div>
+                        <div class="attribute-group">
+                            <label>End Index</label>
+                            <input type="number" id="newSectionEnd" class="form-control" min="0">
                         </div>
                     </div>
                     <div class="attribute-row">
@@ -463,6 +487,38 @@
     </div>
 </div>
 
+<!-- Garmin Credentials Modal -->
+<div class="modal fade" id="garminCredentialsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gradient">
+                <h5 class="modal-title">?? Save Garmin Credentials</h5>
+                <button type="button" class="btn-close" style="filter:invert(1);" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">Your credentials are encrypted with AES-256 and stored securely. You can manage them here.</p>
+                <form id="credentialsForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Garmin Email</label>
+                        <input type="email" id="credEmail" class="form-control" placeholder="your@email.com" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Garmin Password</label>
+                        <input type="password" id="credPassword" class="form-control" placeholder="��������" required>
+                        <small class="text-muted d-block mt-1">Your password is encrypted before storage</small>
+                    </div>
+                    <div id="credentialsError" class="alert alert-danger d-none"></div>
+                    <div id="credentialsSuccess" class="alert alert-success d-none"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn text-white" style="background:linear-gradient(135deg,#667eea,#764ba2);border:none;" onclick="saveGarminCredentialsManual()">?? Save Credentials</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <footer class="footer"><p>&copy; 2024 Muni Trails. Share your mountain adventures.</p></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -477,8 +533,92 @@ let mapInstance = null;
 let trackPolylines = {}; // Store polylines by section index
 
 // ══════════════════════════════════════════
-// SECTION EDITOR MODAL
+// EDIT EXISTING TOUR
 // ══════════════════════════════════════════
+
+async function editTour(tourId) {
+    try {
+        const response = await fetch(`/api/v1/tracks/${tourId}/details`);
+        if (!response.ok) {
+            if (response.status === 403) {
+                alert('You can only edit your own tours.');
+            } else {
+                alert('Could not load tour details.');
+            }
+            return;
+        }
+        
+        const tourDetail = await response.json();
+        
+        // Load GPX data and parse it
+        const gpxData = atob(tourDetail.gpxData || '');
+        const parser = new DOMParser();
+        const gpxDoc = parser.parseFromString(gpxData, 'text/xml');
+        
+        // Parse GPX to get track points
+        const trackData = parseGpxDocument(gpxDoc);
+        trackData.name = tourDetail.name;
+        
+        // Populate track data with tour details
+        currentTrackData = trackData;
+        currentSections = [];
+        currentEditingSource = 'edit';
+        
+        // Fill in the form with existing tour data
+        document.getElementById('tourName').value = tourDetail.name || '';
+        document.getElementById('tourType').value = tourDetail.type || '';
+        document.getElementById('tourDescription').value = tourDetail.description || '';
+        document.getElementById('tourVisibility').value = tourDetail.visibility || 'PUBLIC';
+        document.getElementById('tourOverallRating').value = tourDetail.overallRating || '0';
+        document.getElementById('tourExposition').value = tourDetail.exposition || '5';
+        document.getElementById('tourUphillRating').value = tourDetail.uphillRating || '5';
+        document.getElementById('tourRideAgain').checked = tourDetail.rideAgain || false;
+        
+        // Store tour ID for update
+        document.getElementById('sectionEditorModal').setAttribute('data-tour-id', tourId);
+        
+        renderElevationProfile();
+        renderSectionsList();
+        
+        const modal = new bootstrap.Modal(document.getElementById('sectionEditorModal'));
+        modal.show();
+        
+        setTimeout(() => {
+            renderTrackMap();
+        }, 500);
+    } catch (e) {
+        console.error('Error loading tour:', e);
+        alert('Error: ' + e.message);
+    }
+}
+
+function parseGpxDocument(gpxDoc) {
+    const points = [];
+    const trkpts = gpxDoc.querySelectorAll('trkpt');
+    
+    trkpts.forEach(trkpt => {
+        const lat = parseFloat(trkpt.getAttribute('lat'));
+        const lon = parseFloat(trkpt.getAttribute('lon'));
+        const eleEl = trkpt.querySelector('ele');
+        const elevation = eleEl ? parseFloat(eleEl.textContent) : 0;
+        
+        points.push({
+            lat: lat,
+            lon: lon,
+            elevation: elevation
+        });
+    });
+    
+    return {
+        name: 'Tour',
+        points: points,
+        sections: []
+    };
+}
+
+function viewTour(tourId) {
+    window.location.href = `/tour/${tourId}`;
+}
 
 function initializeSectionEditor(trackData, sections, source) {
     currentTrackData = trackData;
@@ -604,6 +744,11 @@ function renderTrackMap() {
     trackPolylines = {};
     
     // Initialize map centered on first point
+        console.log("First point for map:", firstPoint);
+    if (!firstPoint || !firstPoint.lat || !firstPoint.lon) {
+        console.error("Invalid first point:", firstPoint);
+        return;
+    }
     const firstPoint = currentTrackData.points[0];
     mapInstance = L.map('sectionEditorMap', { scrollWheelZoom: true }).setView(
         [firstPoint.lat, firstPoint.lon],
@@ -702,6 +847,7 @@ function addNewSection() {
         endIndex: end,
         name: name,
         type: type,
+        difficulty: difficulty,
         included: true,
         overallRating: parseInt(document.getElementById('newSectionOverallRating').value) || 0,
         exposition: parseInt(document.getElementById('newSectionExposition').value) || 5,
@@ -756,8 +902,12 @@ function finalizeSectionEditor() {
         return;
     }
     
-    // Send to backend based on source
-    if (currentEditingSource === 'gpx') {
+    const tourId = document.getElementById('sectionEditorModal').getAttribute('data-tour-id');
+    
+    // If tourId exists, it's an edit; otherwise it's a new upload
+    if (tourId) {
+        submitTourEdit(tourId);
+    } else if (currentEditingSource === 'gpx') {
         submitGpxUploadWithAttributes();
     } else if (currentEditingSource === 'garmin') {
         submitGarminImportWithAttributes();
@@ -780,8 +930,41 @@ function escHtml(s) {
 }
 
 // ══════════════════════════════════════════
-// GPX UPLOAD
+// TOUR EDIT SUBMISSION
 // ══════════════════════════════════════════
+
+async function submitTourEdit(tourId) {
+    const updateRequest = {
+        name: document.getElementById('tourName').value.trim(),
+        type: document.getElementById('tourType').value,
+        description: document.getElementById('tourDescription').value,
+        visibility: document.getElementById('tourVisibility').value,
+        overallRating: parseInt(document.getElementById('tourOverallRating').value) || 0,
+        exposition: parseInt(document.getElementById('tourExposition').value) || 5,
+        uphillRating: parseInt(document.getElementById('tourUphillRating').value) || 5,
+        rideAgain: document.getElementById('tourRideAgain').checked,
+        sections: currentSections
+    };
+    
+    try {
+        const response = await fetch(`/api/v1/tracks/${tourId}/edit`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updateRequest)
+        });
+        
+        if (response.ok) {
+            alert('Tour updated successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('sectionEditorModal')).hide();
+            document.getElementById('sectionEditorModal').removeAttribute('data-tour-id');
+            setTimeout(() => location.reload(), 800);
+        } else {
+            alert('Update failed');
+        }
+    } catch (e) {
+        alert('Error: ' + e.message);
+    }
+}
 
 async function uploadGpxAndEdit() {
     const file = document.getElementById('gpxFileInputModal').files[0];
@@ -878,6 +1061,8 @@ function garminReset() {
     activitiesOffset = 0;
     document.getElementById('garminEmail').value = '';
     document.getElementById('garminPassword').value = '';
+    const saveCheckbox = document.getElementById("garminSaveCredentials");
+    if (saveCheckbox) saveCheckbox.checked = false;
     document.getElementById('garminLoginError').classList.add('d-none');
     document.getElementById('activityList').innerHTML = '';
     garminShowStep(0);
@@ -886,37 +1071,79 @@ function garminReset() {
 document.getElementById('garminModal')?.addEventListener('show.bs.modal', garminReset);
 
 async function garminLogin() {
-    const email = document.getElementById('garminEmail').value.trim();
-    const password = document.getElementById('garminPassword').value;
-    const errBox = document.getElementById('garminLoginError');
+    const email = document.getElementById("garminEmail").value.trim();
+    const password = document.getElementById("garminPassword").value;
+    const errBox = document.getElementById("garminLoginError");
+    const saveCheckbox = document.getElementById("garminSaveCredentials");
     
     if (!email || !password) {
-        errBox.textContent = 'Please enter email and password.';
-        errBox.classList.remove('d-none');
+        errBox.textContent = "Please enter email and password.";
+        errBox.classList.remove("d-none");
         return;
     }
     
     try {
-        const r = await fetch('/api/v1/garmin/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+        errBox.classList.add("d-none");
+        errBox.textContent = "Connecting to Garmin...";
+        errBox.classList.remove("alert-danger");
+        errBox.classList.add("alert-info");
+        errBox.classList.remove("d-none");
+        
+        // Set 15 second timeout for Garmin login
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        
+        const r = await fetch("/api/v1/garmin/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+            signal: controller.signal
         });
+        
+        clearTimeout(timeout);
         const body = await r.json();
+        
         if (!r.ok) {
-            errBox.textContent = body.error || 'Login failed';
-            errBox.classList.remove('d-none');
+            errBox.textContent = body.error || "Login failed";
+            errBox.classList.remove("alert-info");
+            errBox.classList.add("alert-danger");
+            errBox.classList.remove("d-none");
             return;
         }
         
         garminToken = body.token;
+        
+        // Save credentials if checkbox exists and is checked
+        if (saveCheckbox && saveCheckbox.checked) {
+            await saveGarminCredentials(email, password);
+        }
+        
+        errBox.classList.add("d-none");
         activitiesOffset = 0;
         allActivities = [];
         await loadActivities();
         garminShowStep(1);
     } catch (e) {
-        errBox.textContent = 'Could not reach Garmin service.';
-        errBox.classList.remove('d-none');
+        if (e.name === 'AbortError') {
+            errBox.textContent = "Connection timeout - Garmin took too long to respond. Please try again.";
+        } else {
+            errBox.textContent = "Could not reach Garmin service: " + e.message;
+        }
+        errBox.classList.remove("alert-info");
+        errBox.classList.add("alert-danger");
+        errBox.classList.remove("d-none");
+    }
+}
+
+async function saveGarminCredentials(email, password) {
+    try {
+        await fetch("/api/v1/profile/garmin/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+        });
+    } catch (e) {
+        console.warn("Could not save credentials:", e.message);
     }
 }
 
@@ -1036,10 +1263,159 @@ async function garminLogout() {
 // INIT
 // ══════════════════════════════════════════
 
+// ------------------------------------------
+// GARMIN CREDENTIALS MANAGEMENT
+// ------------------------------------------
+
+async function loadGarminCredentials() {
+    try {
+        const resp = await fetch('/api/v1/profile/garmin/has-credentials');
+        if (!resp.ok) {
+            document.getElementById('garminCredentialsSection').innerHTML = '<p class="text-danger">Could not load credentials status</p>';
+            return;
+        }
+        
+        const data = await resp.json();
+        const section = document.getElementById('garminCredentialsSection');
+        
+        if (data.hasCredentials) {
+            section.innerHTML = `
+                <div class="alert alert-info">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>? Credentials Saved</strong><br>
+                            <small class="text-muted">Email: ${data.email}</small>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-primary" onclick="showEditCredentialsForm()">?? Update</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteGarminCredentials()">??? Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            section.innerHTML = `
+                <p class="text-muted">No credentials saved yet.</p>
+                <button class="btn btn-sm btn-primary" onclick="showSaveCredentialsModal()">?? Save Credentials</button>
+            `;
+        }
+    } catch (e) {
+        console.error('Error loading credentials:', e);
+        document.getElementById('garminCredentialsSection').innerHTML = '<p class="text-danger">Error loading credentials</p>';
+    }
+}
+
+function showSaveCredentialsModal() {
+    document.getElementById('credentialsForm').reset();
+    document.getElementById('credentialsError').classList.add('d-none');
+    document.getElementById('credentialsSuccess').classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('garminCredentialsModal')).show();
+}
+
+function showEditCredentialsForm() {
+    document.getElementById('credentialsForm').reset();
+    document.getElementById('credentialsError').classList.add('d-none');
+    document.getElementById('credentialsSuccess').classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('garminCredentialsModal')).show();
+}
+
+async function saveGarminCredentialsManual() {
+    const email = document.getElementById('credEmail').value.trim();
+    const password = document.getElementById('credPassword').value;
+    const errBox = document.getElementById('credentialsError');
+    const succBox = document.getElementById('credentialsSuccess');
+    
+    if (!email || !password) {
+        errBox.textContent = 'Please enter both email and password';
+        errBox.classList.remove('d-none');
+        return;
+    }
+    
+    try {
+        errBox.classList.add('d-none');
+        succBox.classList.add('d-none');
+        
+        const resp = await fetch('/api/v1/profile/garmin/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        
+        if (!resp.ok) {
+            const errData = await resp.json();
+            errBox.textContent = errData.error || 'Failed to save credentials';
+            errBox.classList.remove('d-none');
+            return;
+        }
+        
+        succBox.textContent = '? Credentials saved securely (AES-256 encrypted)';
+        succBox.classList.remove('d-none');
+        
+        setTimeout(() => {
+            bootstrap.Modal.getInstance(document.getElementById('garminCredentialsModal')).hide();
+            loadGarminCredentials();
+        }, 1500);
+    } catch (e) {
+        errBox.textContent = 'Error: ' + e.message;
+        errBox.classList.remove('d-none');
+    }
+}
+
+async function deleteGarminCredentials() {
+    if (!confirm('Delete saved Garmin credentials? You will need to log in again next time.')) {
+        return;
+    }
+    
+    try {
+        const resp = await fetch('/api/v1/profile/garmin/delete', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (resp.ok) {
+            loadGarminCredentials();
+        } else {
+            alert('Failed to delete credentials');
+        }
+    } catch (e) {
+        alert('Error: ' + e.message);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     if (window.location.pathname.includes('/profile'))
         document.getElementById('nav-profile')?.classList.add('active');
 });
 </script>
 </body>
-</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
