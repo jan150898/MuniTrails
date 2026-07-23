@@ -4,10 +4,13 @@ C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\conf
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\dto\CommentResponse.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\dto\CreateCommentRequest.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\dto\CreateTrackRequest.java
+C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\dto\TourDetailResponse.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\dto\TrackResponse.java
+C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\dto\UpdateTourRequest.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\dto\UploadSectionRequest.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\model\Comment.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\model\Downhill.java
+C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\model\GarminActivityCache.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\model\GarminCredential.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\model\GPXTrack.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\model\GPXTrackStatus.java
@@ -18,6 +21,7 @@ C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\mode
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\model\User.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\model\Visibility.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\repo\CommentRepository.java
+C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\repo\GarminActivityCacheRepository.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\repo\GarminCredentialRepository.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\repo\GPXTrackRepository.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\repo\UserRepository.java
@@ -35,6 +39,6 @@ C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\web\
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\web\GpxUploadController.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\web\LandingController.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\web\ProfileController.java
+C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\web\SectionDetector.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\web\TourPageController.java
 C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\web\TrackController.java
-C:\Users\hirsc\Documents\Muni\TrailsSpring\src\main\java\com\example\trails\web\UploadPageController.java
