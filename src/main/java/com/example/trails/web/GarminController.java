@@ -1,15 +1,18 @@
 package com.example.trails.web;
 
+import com.example.trails.model.GarminActivityCache;
 import com.example.trails.model.GPXTrack;
 import com.example.trails.model.GPXTrackStatus;
 import com.example.trails.model.GPXTrackType;
 import com.example.trails.model.User;
 import com.example.trails.model.Visibility;
+import com.example.trails.repo.GarminActivityCacheRepository;
 import com.example.trails.repo.GPXTrackRepository;
 import com.example.trails.service.UserService;
 import com.example.trails.dto.TrackResponse;
 import com.example.trails.dto.UploadSectionRequest;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,14 +36,17 @@ public class GarminController {
     private final ObjectMapper mapper = new ObjectMapper();
     private final GPXTrackRepository trackRepo;
     private final UserService userService;
+    private final GarminActivityCacheRepository cacheRepo;
 
     @Value("${garmin.service.url:http://garmin-service:5000}")
     private String garminServiceUrl;
 
-    public GarminController(GPXTrackRepository trackRepo, UserService userService, RestTemplate restTemplate) {
+    public GarminController(GPXTrackRepository trackRepo, UserService userService, RestTemplate restTemplate,
+                          GarminActivityCacheRepository cacheRepo) {
         this.trackRepo = trackRepo;
         this.userService = userService;
         this.rest = restTemplate;
+        this.cacheRepo = cacheRepo;
     }
 
     @PostMapping("/login")
@@ -161,6 +167,81 @@ public class GarminController {
         } catch (Exception e) {
             logger.error("Error analyzing activity " + activityId, e);
             return ResponseEntity.status(502).body(Map.of("error", "Could not analyze Garmin activity: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/cache-activities")
+    public ResponseEntity<?> cacheActivities(
+            @RequestBody Map<String, String> body,
+            Principal principal) {
+        String token = body.get("token");
+        if (token == null || token.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "token required"));
+        }
+        
+        try {
+            logger.info("Caching Garmin activities");
+            long startTime = System.currentTimeMillis();
+            
+            String url = garminServiceUrl + "/activities?token=" + token + "&limit=100&offset=0";
+            ResponseEntity<String> resp = rest.getForEntity(url, String.class);
+            
+            if (!resp.getStatusCode().is2xxSuccessful()) {
+                return ResponseEntity.status(resp.getStatusCode()).body(resp.getBody());
+            }
+            
+            JsonNode activitiesNode = mapper.readTree(resp.getBody());
+            User user = userService.getUserByUsername(principal.getName());
+            
+            GarminActivityCache cache = cacheRepo.findByUser(user)
+                    .orElseGet(() -> new GarminActivityCache());
+            cache.setUser(user);
+            cache.setActivities(activitiesNode);
+            cacheRepo.save(cache);
+            
+            long duration = System.currentTimeMillis() - startTime;
+            logger.info("Activities cached in {} ms", duration);
+            
+            return ResponseEntity.ok(Map.of(
+                "cached", true,
+                "count", activitiesNode.size(),
+                "duration", duration
+            ));
+        } catch (Exception e) {
+            logger.error("Error caching activities", e);
+            return ResponseEntity.status(502).body(Map.of("error", "Failed to cache activities: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/cached-activities")
+    public ResponseEntity<?> getCachedActivities(Principal principal) {
+        try {
+            User user = userService.getUserByUsername(principal.getName());
+            var cache = cacheRepo.findByUser(user);
+            
+            if (cache.isEmpty() || cache.get().isExpired()) {
+                return ResponseEntity.ok(Map.of(
+                    "cached", false,
+                    "message", "No valid cached activities"
+                ));
+            }
+            
+            JsonNode activities = cache.get().getActivities();
+            long cacheAgeSeconds = java.time.Duration.between(
+                cache.get().getCachedAt(),
+                java.time.Instant.now()
+            ).getSeconds();
+            
+            logger.info("Returning {} cached activities", activities.size());
+            
+            return ResponseEntity.ok(Map.of(
+                "cached", true,
+                "activities", activities,
+                "cacheAgeSeconds", cacheAgeSeconds
+            ));
+        } catch (Exception e) {
+            logger.error("Error retrieving cached activities", e);
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to retrieve cache"));
         }
     }
 

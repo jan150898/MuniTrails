@@ -1116,6 +1116,14 @@ async function garminLogin() {
         // Save credentials if checkbox exists and is checked
         if (saveCheckbox && saveCheckbox.checked) {
             await saveGarminCredentials(email, password);
+            // Also cache activities in the background
+            fetch("/api/v1/garmin/cache-activities", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ token: garminToken })
+            }).then(r => r.json())
+             .then(data => console.log("Cached", data.count, "activities"))
+             .catch(e => console.warn("Cache failed", e));
         }
         
         errBox.classList.add("d-none");
@@ -1388,6 +1396,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 </body>
+
+
+
+
 
 
 
