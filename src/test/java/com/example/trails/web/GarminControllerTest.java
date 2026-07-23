@@ -5,6 +5,7 @@ import com.example.trails.model.GPXTrackStatus;
 import com.example.trails.model.GPXTrackType;
 import com.example.trails.model.User;
 import com.example.trails.repo.GPXTrackRepository;
+import com.example.trails.repo.GarminActivityCacheRepository;
 import com.example.trails.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +49,12 @@ class GarminControllerTest {
     // Tests rely on fixing GarminController to inject RestTemplate.
     @MockBean
     private RestTemplate restTemplate;
+
+    @MockBean
+    private GarminActivityCacheRepository garminActivityCacheRepository;
+
+
+
 
 
 
@@ -144,17 +151,16 @@ class GarminControllerTest {
         when(restTemplate.getForEntity(anyString(), eq(byte[].class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED, "Unauthorized"));
 
-
-
-
         String importBody = "{\"token\":\"bad_token\",\"type\":\"TOUR\"}";
 
         mockMvc.perform(post("/api/v1/garmin/import/12345")
+                .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .contentType("application/json")
                 .content(importBody)
                 .principal(() -> "testuser"))
-                .andExpect(status().isForbidden());
-
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error").value("invalid or expired session token"))
+                .andExpect(jsonPath("$.retryable").value(true));
     }
 
     @Test

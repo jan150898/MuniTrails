@@ -3,7 +3,6 @@ package com.example.trails.service;
 import com.example.trails.model.GPXTrack;
 import com.example.trails.model.GPXTrackStatus;
 import com.example.trails.model.GPXTrackType;
-import com.example.trails.model.Visibility;
 import com.example.trails.model.User;
 import com.example.trails.dto.TrackResponse;
 import com.example.trails.dto.UpdateTourRequest;
@@ -88,8 +87,7 @@ public class TrackService {
         GPXTrack track = new GPXTrack();
         track.setName(name);
         track.setType(type);
-        track.setStatus(GPXTrackStatus.DRAFT);
-        track.setVisibility(Visibility.PUBLIC);
+        track.setStatus(GPXTrackStatus.PUBLISHED);
         track.setCreatedBy(createdBy);
         track.setLastEditedBy(createdBy);
         track.setStartLat(startLat);
@@ -127,7 +125,6 @@ public class TrackService {
         
         if (req.getName() != null) track.setName(req.getName());
         if (req.getType() != null) track.setType(GPXTrackType.valueOf(req.getType().toUpperCase()));
-        if (req.getVisibility() != null) track.setVisibility(Visibility.valueOf(req.getVisibility().toUpperCase()));
         track.setOverallRating(req.getOverallRating());
         track.setExposition(req.getExposition());
         track.setUphillRating(req.getUphillRating());

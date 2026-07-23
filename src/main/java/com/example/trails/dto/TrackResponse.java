@@ -3,7 +3,6 @@ package com.example.trails.dto;
 import com.example.trails.model.GPXTrack;
 import com.example.trails.model.GPXTrackStatus;
 import com.example.trails.model.GPXTrackType;
-import com.example.trails.model.Visibility;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -12,7 +11,6 @@ public class TrackResponse {
     private String name;
     private String type;
     private String status;
-    private String visibility;
     private double startLat;
     private double startLon;
     private double distanceMeters;
@@ -28,7 +26,7 @@ public class TrackResponse {
     public TrackResponse() {}
 
     /** Lightweight list projection that intentionally excludes the GPX binary data. */
-    public TrackResponse(UUID id, String name, GPXTrackType type, GPXTrackStatus status, Visibility visibility,
+    public TrackResponse(UUID id, String name, GPXTrackType type, GPXTrackStatus status,
                          double startLat, double startLon, double distanceMeters, double elevationGainMeters,
                          double elevationLossMeters, int overallRating, int exposition, int uphillRating,
                          boolean rideAgain, Instant createdAt, Instant updatedAt) {
@@ -36,7 +34,6 @@ public class TrackResponse {
         this.name = name;
         this.type = type == null ? null : type.name();
         this.status = status == null ? null : status.name();
-        this.visibility = visibility == null ? null : visibility.name();
         this.startLat = startLat;
         this.startLon = startLon;
         this.distanceMeters = distanceMeters;
@@ -55,10 +52,6 @@ public class TrackResponse {
         this.name = track.getName();
         this.type = track.getType() != null ? track.getType().name() : null;
         this.status = track.getStatus() != null ? track.getStatus().name() : null;
-        // Tests may provide a GPXTrack without visibility set.
-        // Avoid NPE and let JSON omit/return null instead.
-        this.visibility = track.getVisibility() != null ? track.getVisibility().name() : null;
-
         this.startLat = track.getStartLat();
         this.startLon = track.getStartLon();
         this.distanceMeters = track.getDistanceMeters();
@@ -83,9 +76,6 @@ public class TrackResponse {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-
-    public String getVisibility() { return visibility; }
-    public void setVisibility(String visibility) { this.visibility = visibility; }
 
     public double getStartLat() { return startLat; }
     public void setStartLat(double startLat) { this.startLat = startLat; }

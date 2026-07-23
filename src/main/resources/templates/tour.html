@@ -1,436 +1,611 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${tour.name} + ' | Muni Trails'">Tour | Muni Trails</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <style>
-        :root { --primary: #667eea; --secondary: #764ba2; }
-        body { background: #f8f9fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-        .navbar { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); }
-        .hero { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; padding: 40px 20px; }
-        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; margin: 30px 0; }
-        .metric-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; }
-        .metric-value { font-size: 1.8rem; font-weight: bold; color: var(--primary); }
-        .metric-label { font-size: 0.9rem; color: #666; margin-top: 5px; }
-        .section { background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
-        #tourMap { height: 400px; border-radius: 8px; margin-bottom: 20px; cursor: crosshair; }
-        #elevationChart { max-height: 300px; cursor: crosshair; }
-        .btn-download { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); border: none; color: white; }
-        .btn-download:hover { background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); color: white; }
-        .section-legend { display: flex; gap: 20px; margin: 15px 0; font-size: 0.9rem; }
-        .legend-item { display: flex; align-items: center; gap: 8px; }
-        .legend-color { width: 16px; height: 16px; border-radius: 3px; }
-        .uphill { background-color: #198754; }
-        .downhill { background-color: #dc3545; }
-        .sync-info { background: #e7f3ff; border-left: 4px solid #667eea; padding: 12px; border-radius: 4px; font-size: 0.9rem; color: #333; margin-bottom: 15px; }
-    </style>
-</head>
-<body th:include="_navbar.html" />
-<!-- Main content below navbar -->
-<!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg navbar-dark">
-    <div class="container">
-        <a class="navbar-brand" href="/landing">🏔️ Muni Trails</a>
-        <a class="btn btn-outline-light ms-auto" href="/tours">← Back to Tours</a>
-    </div>
-</nav>
-
-<!-- HERO SECTION -->
-<div class="hero">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-start">
-            <div>
-                <h1 class="mb-2" th:text="${tour.name}">Tour Name</h1>
-                <span class="badge bg-white text-primary me-2" th:text="${tour.type}">TOUR</span>
-                <span class="badge bg-warning text-dark" th:if="${tour.status == 'DRAFT'}">Draft</span>
-                <span class="badge bg-success" th:if="${tour.status == 'PUBLISHED'}">Published</span>
-            </div>
-            <a class="btn btn-download btn-lg" th:href="@{/api/v1/tracks/{id}/download-gpx(id=${tour.id})}">
-                📥 Download GPX
-            </a>
-        </div>
-    </div>
-</div>
-
-<!-- METRICS -->
-<div class="container">
-    <div class="metrics-grid">
-        <div class="metric-card">
-            <div class="metric-value" th:text="${#numbers.formatDecimal(tour.distanceMeters / 1000, 0, 'COMMA', 1, 'POINT')}">0</div>
-            <div class="metric-label">km Distance</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-value" th:text="${#numbers.formatDecimal(tour.elevationGainMeters, 0, 'COMMA', 0, 'POINT')}">0</div>
-            <div class="metric-label">m Elevation Gain</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-value" th:text="${#numbers.formatDecimal(tour.elevationLossMeters, 0, 'COMMA', 0, 'POINT')}">0</div>
-            <div class="metric-label">m Elevation Loss</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-value" th:text="${tour.overallRating} + '/10'">0/10</div>
-            <div class="metric-label">Overall Rating</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-value" th:text="${tour.exposition} + '/10'">5/10</div>
-            <div class="metric-label">Exposition</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-value" th:text="${tour.uphillRating} + '/10'">5/10</div>
-            <div class="metric-label">Uphill Rating</div>
-        </div>
-    </div>
-</div>
-
-<!-- TRACK VISUALIZATION -->
-<div class="container">
-    <div class="section">
-        <h2 class="mb-3">🗺️ Track Map</h2>
-        <div class="sync-info">
-            💡 Hover over the track or elevation chart to see synchronized points
-        </div>
-        <div id="tourMap"></div>
-        <div class="section-legend">
-            <div class="legend-item">
-                <div class="legend-color" style="background-color: #ddd;"></div>
-                <span>Base Track</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color uphill"></div>
-                <span>Uphill Sections</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color downhill"></div>
-                <span>Downhill Sections</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="section">
-        <h2 class="mb-3">📈 Elevation Profile</h2>
-        <div style="position: relative; height: 300px;">
-            <canvas id="elevationChart"></canvas>
-            <div id="verticalLine" style="position: absolute; top: 0; width: 2px; height: 100%; background: rgba(102, 126, 234, 0.5); pointer-events: none; display: none; z-index: 10;"></div>
-        </div>
-    </div>
-</div>
-
-<div th:include="_footer.html" />
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-let mapInstance = null;
-let elevationChartInstance = null;
-let allPoints = []; // Store all track points for synchronization
-let trackPolyline = null;
-let hoveredPointIndex = -1;
-let highlightMarker = null;
-let distances = []; // Track distances for chart sync
-
-document.addEventListener('DOMContentLoaded', async () => {
-    const trackId = window.location.pathname.split('/').pop();
-    
-    try {
-        const response = await fetch(`/api/v1/tracks/${trackId}/details`);
-        if (!response.ok) {
-            alert('Could not load tour details');
-            return;
+    <title th:text="${tour.name}"></title>
+    <style layout:fragment="extra-styles">
+        :root { 
+            --primary: #667eea; 
+            --secondary: #764ba2;
+            --success: #198754;
+            --danger: #dc3545;
         }
         
-        const tour = await response.json();
-        renderMap(tour);
-        renderElevationProfile(tour);
-        setupSynchronization();
-    } catch (e) {
-        console.error('Error loading tour:', e);
-        alert('Error: ' + e.message);
-    }
-});
-
-function renderMap(tour) {
-    if (!tour.gpxData) return;
-    
-    const gpxData = atob(tour.gpxData);
-    const parser = new DOMParser();
-    const gpxDoc = parser.parseFromString(gpxData, 'text/xml');
-    
-    const points = [];
-    const trkpts = gpxDoc.querySelectorAll('trkpt');
-    
-    trkpts.forEach(trkpt => {
-        const lat = parseFloat(trkpt.getAttribute('lat'));
-        const lon = parseFloat(trkpt.getAttribute('lon'));
-        const eleEl = trkpt.querySelector('ele');
-        const elevation = eleEl ? parseFloat(eleEl.textContent) : 0;
-        points.push({lat, lon, elevation});
-    });
-    
-    allPoints = points; // Store globally for synchronization
-    
-    if (points.length === 0) return;
-    
-    if (mapInstance) mapInstance.remove();
-    
-    mapInstance = L.map('tourMap').setView([points[0].lat, points[0].lon], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap',
-        maxZoom: 19
-    }).addTo(mapInstance);
-    
-    const coords = points.map(p => [p.lat, p.lon]);
-    trackPolyline = L.polyline(coords, {
-        color: '#dc3545',
-        weight: 3,
-        opacity: 0.7
-    }).addTo(mapInstance);
-    
-    const bounds = L.latLngBounds(coords);
-    mapInstance.fitBounds(bounds, {padding: [50, 50]});
-}
-
-function renderElevationProfile(tour) {
-    if (!tour.gpxData) return;
-    
-    const gpxData = atob(tour.gpxData);
-    const parser = new DOMParser();
-    const gpxDoc = parser.parseFromString(gpxData, 'text/xml');
-    
-    distances = [];
-    const elevations = [];
-    let totalDist = 0;
-    
-    const trkpts = gpxDoc.querySelectorAll('trkpt');
-    const points = [];
-    
-    trkpts.forEach(trkpt => {
-        const lat = parseFloat(trkpt.getAttribute('lat'));
-        const lon = parseFloat(trkpt.getAttribute('lon'));
-        const eleEl = trkpt.querySelector('ele');
-        const elevation = eleEl ? parseFloat(eleEl.textContent) : 0;
-        points.push({lat, lon, elevation});
-    });
-    
-    points.forEach((p, i) => {
-        if (i > 0) {
-            const prev = points[i - 1];
-            const dist = haversineDistance(prev.lat, prev.lon, p.lat, p.lon) * 1000;
-            totalDist += dist;
+        body { 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         }
-        distances.push(Number((totalDist / 1000).toFixed(1)));
-        elevations.push(p.elevation || 0);
-    });
-    
-    const ctx = document.getElementById('elevationChart');
-    if (elevationChartInstance) elevationChartInstance.destroy();
-    
-    elevationChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: distances,
-            datasets: [{
-                label: 'Elevation (m)',
-                data: elevations,
-                borderColor: '#667eea',
-                backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                borderWidth: 2.5,
-                fill: true,
-                tension: 0.3,
-                pointRadius: 0,
-                pointHoverRadius: 8,
-                pointBackgroundColor: '#667eea',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {display: true, position: 'top'},
-                tooltip: {
-                    enabled: true, 
-                    mode: 'index', 
-                    intersect: false,
-                    callbacks: {
-                        label: function(context) {
-                            return 'Elevation: ' + Math.round(context.parsed.y) + ' m';
+        
+        .hero { 
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white; 
+            padding: 50px 20px;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+        }
+        
+        .hero h1 {
+            font-size: clamp(1.8rem, 5vw, 2.8rem);
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 15px;
+        }
+        
+        .metrics-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+            gap: 15px; 
+            margin: 40px 0;
+        }
+        
+        @media (min-width: 992px) {
+            .metrics-grid {
+                grid-template-columns: repeat(6, 1fr);
+                gap: 20px;
+            }
+        }
+        
+        .metric-card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+            border-color: var(--primary);
+        }
+        
+        .metric-value { 
+            font-size: clamp(1.4rem, 4vw, 2rem);
+            font-weight: 800; 
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .metric-label { 
+            font-size: 0.85rem; 
+            color: #666; 
+            margin-top: 8px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .section { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 25px; 
+            margin-bottom: 30px; 
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            border-top: 4px solid var(--primary);
+        }
+        
+        .section h2 {
+            font-size: clamp(1.3rem, 3vw, 1.8rem);
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .visualization-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        @media (min-width: 1200px) {
+            .visualization-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .visualization-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        #tourMap { 
+            height: 350px;
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            cursor: crosshair;
+            border: 2px solid #f0f0f0;
+        }
+        
+        @media (min-width: 1200px) {
+            #tourMap {
+                height: 450px;
+            }
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 320px;
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        @media (min-width: 1200px) {
+            .chart-container {
+                height: 420px;
+            }
+        }
+        
+        #elevationChart { 
+            cursor: crosshair;
+            max-width: 100%;
+        }
+        
+        .btn-download { 
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); 
+            border: none; 
+            color: white;
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-download:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        
+        .section-legend { 
+            display: flex; 
+            flex-wrap: wrap;
+            gap: 15px; 
+            margin: 15px 0;
+            font-size: 0.9rem;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .legend-item { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px;
+            font-weight: 500;
+        }
+        
+        .legend-color { 
+            width: 20px; 
+            height: 20px; 
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .legend-color.uphill { background-color: var(--success); }
+        .legend-color.downhill { background-color: var(--danger); }
+        .legend-color.base { background-color: #ddd; }
+        
+        .sync-info { 
+            background: linear-gradient(135deg, #e7f3ff 0%, #f0e7ff 100%);
+            border-left: 4px solid var(--primary); 
+            padding: 14px 16px; 
+            border-radius: 8px; 
+            font-size: 0.95rem; 
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .sync-info::before {
+            content: '💡';
+            font-size: 1.2rem;
+        }
+        
+        #verticalLine {
+            position: absolute;
+            top: 15px;
+            width: 3px;
+            height: calc(100% - 30px);
+            background: linear-gradient(180deg, rgba(102, 126, 234, 0.8) 0%, rgba(102, 126, 234, 0.3) 100%);
+            pointer-events: none;
+            display: none;
+            z-index: 10;
+            box-shadow: 0 0 8px rgba(102, 126, 234, 0.4);
+            border-radius: 2px;
+        }
+        
+        @media (max-width: 576px) {
+            .hero {
+                padding: 30px 15px;
+            }
+            
+            .section {
+                padding: 18px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main layout:fragment="content">
+        <!-- HERO SECTION -->
+        <div class="hero">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                    <div class="flex-grow-1">
+                        <h1 th:text="${tour.name}">Tour Name</h1>
+                        <div>
+                            <span class="badge bg-light text-primary me-2 fs-6" th:text="${tour.type}">TOUR</span>
+                            <span class="badge bg-warning text-dark fs-6" th:if="${tour.status == 'DRAFT'}">Draft</span>
+                            <span class="badge bg-success fs-6" th:if="${tour.status == 'PUBLISHED'}">Published</span>
+                        </div>
+                    </div>
+                    <a class="btn btn-download btn-lg" th:href="@{/api/v1/tracks/{id}/download-gpx(id=${tour.id})}">
+                        📥 Download GPX
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- METRICS -->
+        <div class="container-fluid">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value" th:text="${#numbers.formatDecimal(tour.distanceMeters / 1000, 0, 'COMMA', 1, 'POINT')}">0</div>
+                    <div class="metric-label">km</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" th:text="${#numbers.formatDecimal(tour.elevationGainMeters, 0, 'COMMA', 0, 'POINT')}">0</div>
+                    <div class="metric-label">m Elevation ↗</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" th:text="${#numbers.formatDecimal(tour.elevationLossMeters, 0, 'COMMA', 0, 'POINT')}">0</div>
+                    <div class="metric-label">m Elevation ↘</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" th:text="${tour.overallRating} + '/10'">0/10</div>
+                    <div class="metric-label">Overall</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" th:text="${tour.exposition} + '/10'">5/10</div>
+                    <div class="metric-label">Exposition</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" th:text="${tour.uphillRating} + '/10'">5/10</div>
+                    <div class="metric-label">Uphill</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TRACK VISUALIZATION -->
+        <div class="container-fluid">
+            <div class="section">
+                <h2>🗺️ Track Map</h2>
+                <div class="sync-info">Hover over the track or elevation chart to see synchronized points</div>
+                
+                <div class="visualization-grid">
+                    <div class="visualization-section">
+                        <div id="tourMap"></div>
+                    </div>
+                    <div class="visualization-section">
+                        <div class="chart-container" id="chartContainer">
+                            <canvas id="elevationChart"></canvas>
+                            <div id="verticalLine"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section-legend">
+                    <div class="legend-item">
+                        <div class="legend-color base"></div>
+                        <span>Base Track</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color uphill"></div>
+                        <span>Uphill Sections</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color downhill"></div>
+                        <span>Downhill Sections</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script layout:fragment="extra-scripts">
+        let mapInstance = null;
+        let elevationChartInstance = null;
+        let allPoints = [];
+        let trackPolyline = null;
+        let highlightMarker = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const trackId = window.location.pathname.split('/').pop();
+            
+            try {
+                const response = await fetch(`/api/v1/tracks/${trackId}/details`);
+                if (!response.ok) {
+                    alert('Could not load tour details');
+                    return;
+                }
+                
+                const tour = await response.json();
+                renderMap(tour);
+                renderElevationProfile(tour);
+                
+                setTimeout(() => {
+                    setupSynchronization();
+                }, 500);
+            } catch (e) {
+                console.error('Error loading tour:', e);
+                alert('Error: ' + e.message);
+            }
+        });
+
+        function parseGPXData(tour) {
+            if (!tour.gpxData) return [];
+            
+            const gpxData = atob(tour.gpxData);
+            const parser = new DOMParser();
+            const gpxDoc = parser.parseFromString(gpxData, 'text/xml');
+            
+            const points = [];
+            const trkpts = gpxDoc.querySelectorAll('trkpt');
+            
+            trkpts.forEach(trkpt => {
+                const lat = parseFloat(trkpt.getAttribute('lat'));
+                const lon = parseFloat(trkpt.getAttribute('lon'));
+                const eleEl = trkpt.querySelector('ele');
+                const elevation = eleEl ? parseFloat(eleEl.textContent) : 0;
+                points.push({lat, lon, elevation});
+            });
+            
+            return points;
+        }
+
+        function addDistancesToPoints(points) {
+            let totalDist = 0;
+            points.forEach((p, i) => {
+                if (i > 0) {
+                    const prev = points[i - 1];
+                    const dist = haversineDistance(prev.lat, prev.lon, p.lat, p.lon) * 1000;
+                    totalDist += dist;
+                }
+                p.distanceKm = Number((totalDist / 1000).toFixed(3));
+            });
+            return points;
+        }
+
+        function renderMap(tour) {
+            const points = parseGPXData(tour);
+            if (points.length === 0) return;
+            
+            allPoints = addDistancesToPoints(points);
+            
+            if (mapInstance) mapInstance.remove();
+            
+            mapInstance = L.map('tourMap', {
+                zoomControl: true,
+                scrollWheelZoom: true
+            }).setView([points[0].lat, points[0].lon], 12);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap',
+                maxZoom: 19
+            }).addTo(mapInstance);
+            
+            const coords = points.map(p => [p.lat, p.lon]);
+            trackPolyline = L.polyline(coords, {
+                color: '#dc3545',
+                weight: 4,
+                opacity: 0.85,
+                lineCap: 'round',
+                lineJoin: 'round'
+            }).addTo(mapInstance);
+            
+            const bounds = L.latLngBounds(coords);
+            mapInstance.fitBounds(bounds, {padding: [60, 60]});
+        }
+
+        function renderElevationProfile(tour) {
+            const points = parseGPXData(tour);
+            if (points.length === 0) return;
+            
+            allPoints = addDistancesToPoints(points);
+            
+            const distances = allPoints.map(p => p.distanceKm);
+            const elevations = allPoints.map(p => p.elevation || 0);
+            
+            const ctx = document.getElementById('elevationChart');
+            if (elevationChartInstance) elevationChartInstance.destroy();
+            
+            elevationChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: distances.map((d, i) => i % Math.max(1, Math.floor(distances.length / 20)) === 0 ? d.toFixed(1) : ''),
+                    datasets: [{
+                        label: 'Elevation (m)',
+                        data: elevations,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.08)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: {size: 12, weight: 'bold'},
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            enabled: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            grid: {display: false},
+                            title: {display: true, text: 'Distance (km)', font: {weight: 'bold'}}
+                        },
+                        y: {
+                            display: true,
+                            title: {display: true, text: 'Elevation (m)', font: {weight: 'bold'}},
+                            beginAtZero: false
                         }
                     }
                 }
-            },
-            scales: {
-                x: {display: true, title: {display: true, text: 'Distance (km)'}},
-                y: {display: true, title: {display: true, text: 'Elevation (m)'}}
-            },
-            onHover: (event, activeElements) => {
-                if (activeElements.length > 0) {
-                    const index = activeElements[0].index;
-                    highlightPointOnMap(index);
-                } else {
+            });
+        }
+
+        function setupSynchronization() {
+            const chartContainer = document.getElementById('chartContainer');
+            const canvas = document.getElementById('elevationChart');
+            
+            if (!chartContainer || !canvas) return;
+            
+            chartContainer.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                onChartHover(x);
+            });
+            
+            chartContainer.addEventListener('mouseleave', () => {
+                document.getElementById('verticalLine').style.display = 'none';
+                clearMapHighlight();
+            });
+            
+            if (mapInstance) {
+                mapInstance.on('mousemove', (e) => {
+                    onMapHover(e.latlng);
+                });
+                
+                mapInstance.on('mouseleave', () => {
+                    document.getElementById('verticalLine').style.display = 'none';
                     clearMapHighlight();
-                }
+                });
             }
         }
-    });
-}
 
-function setupSynchronization() {
-    // Listen to canvas hover for map synchronization
-    const canvas = document.getElementById('elevationChart');
-    if (canvas) {
-        canvas.addEventListener('mousemove', (e) => {
-            const canvasRect = canvas.getBoundingClientRect();
-            const x = e.clientX - canvasRect.left;
+        function onChartHover(x) {
+            if (!elevationChartInstance || allPoints.length === 0) return;
             
-            // Get chart pixel coordinates
             const chartArea = elevationChartInstance.chartArea;
-            if (x < chartArea.left || x > chartArea.right) {
-                clearMapHighlight();
-                return;
-            }
             
-            // Calculate which data point we're near
-            const xScale = elevationChartInstance.scales.x;
-            const pixel = x;
-            const value = xScale.getValueForPixel(pixel);
+            if (x < chartArea.left || x > chartArea.right) return;
             
-            // Find nearest point
-            let nearestIdx = 0;
-            let minDiff = Math.abs(distances[0] - value);
+            const maxX = chartArea.right - chartArea.left;
+            const ratio = (x - chartArea.left) / maxX;
+            const maxDistance = allPoints[allPoints.length - 1].distanceKm;
+            const hoverDistance = maxDistance * ratio;
             
-            for (let i = 1; i < distances.length; i++) {
-                const diff = Math.abs(distances[i] - value);
-                if (diff < minDiff) {
-                    minDiff = diff;
-                    nearestIdx = i;
+            let bestIdx = 0;
+            let bestDiff = Math.abs(allPoints[0].distanceKm - hoverDistance);
+            
+            for (let i = 1; i < allPoints.length; i++) {
+                const diff = Math.abs(allPoints[i].distanceKm - hoverDistance);
+                if (diff < bestDiff) {
+                    bestDiff = diff;
+                    bestIdx = i;
                 }
             }
             
-            highlightPointOnMap(nearestIdx);
+            highlightPointOnMap(bestIdx);
+            updateVerticalLine(x);
+        }
+
+        function onMapHover(latlng) {
+            if (allPoints.length === 0) return;
             
-            // Show vertical line at cursor
-            const vertLine = document.getElementById('verticalLine');
-            if (vertLine) {
-                vertLine.style.left = x + 'px';
-                vertLine.style.display = 'block';
-            }
-        });
-        
-        canvas.addEventListener('mouseleave', () => {
-            clearMapHighlight();
-            const vertLine = document.getElementById('verticalLine');
-            if (vertLine) vertLine.style.display = 'none';
-        });
-    }
-    
-    // Listen to map hover for chart synchronization
-    if (mapInstance) {
-        mapInstance.on('mousemove', (e) => {
-            const latlng = e.latlng;
-            
-            // Find nearest point on track
-            let nearestIdx = 0;
-            let minDistance = Number.MAX_VALUE;
+            let bestIdx = 0;
+            let minDist = Number.MAX_VALUE;
             
             allPoints.forEach((p, i) => {
                 const dist = L.latLng(p.lat, p.lon).distanceTo(latlng);
-                if (dist < minDistance) {
-                    minDistance = dist;
-                    nearestIdx = i;
+                if (dist < minDist) {
+                    minDist = dist;
+                    bestIdx = i;
                 }
             });
             
-            // Only highlight if close enough (within ~50m)
-            if (minDistance < 50) {
-                highlightPointOnChart(nearestIdx);
-            } else {
-                clearChartHighlight();
+            const canvas = document.getElementById('elevationChart');
+            if (!elevationChartInstance || !canvas) return;
+            
+            const chartArea = elevationChartInstance.chartArea;
+            const maxDistance = allPoints[allPoints.length - 1].distanceKm;
+            const pointDistance = allPoints[bestIdx].distanceKm;
+            const ratio = pointDistance / maxDistance;
+            const x = chartArea.left + (chartArea.right - chartArea.left) * ratio;
+            
+            updateVerticalLine(x);
+        }
+
+        function highlightPointOnMap(index) {
+            if (index < 0 || index >= allPoints.length) return;
+            
+            const point = allPoints[index];
+            
+            if (highlightMarker) {
+                mapInstance.removeLayer(highlightMarker);
             }
-        });
-        
-        mapInstance.on('mouseleave', () => {
-            clearChartHighlight();
-        });
-    }
-}
+            
+            highlightMarker = L.circleMarker([point.lat, point.lon], {
+                radius: 10,
+                fillColor: '#ffd700',
+                color: '#333',
+                weight: 3,
+                opacity: 1,
+                fillOpacity: 0.95
+            }).addTo(mapInstance);
+        }
 
-function highlightPointOnMap(index) {
-    if (index < 0 || index >= allPoints.length) return;
-    
-    const point = allPoints[index];
-    
-    // Remove old marker
-    if (highlightMarker) {
-        mapInstance.removeLayer(highlightMarker);
-    }
-    
-    // Add new highlight marker
-    highlightMarker = L.circleMarker([point.lat, point.lon], {
-        radius: 8,
-        fillColor: '#ffd700',
-        color: '#333',
-        weight: 3,
-        opacity: 1,
-        fillOpacity: 0.9
-    }).addTo(mapInstance);
-    
-    hoveredPointIndex = index;
-}
+        function updateVerticalLine(x) {
+            const vertLine = document.getElementById('verticalLine');
+            if (!vertLine) return;
+            
+            vertLine.style.left = x + 'px';
+            vertLine.style.display = 'block';
+        }
 
-function highlightPointOnChart(index) {
-    if (index < 0 || index >= allPoints.length) return;
-    
-    // Trigger chart hover effect by updating tooltip
-    const canvas = document.getElementById('elevationChart');
-    if (!canvas || !elevationChartInstance) return;
-    
-    // Create synthetic event to highlight the point
-    const dataX = distances[index];
-    const chartArea = elevationChartInstance.chartArea;
-    const xScale = elevationChartInstance.scales.x;
-    
-    // Calculate pixel position
-    const xPixel = xScale.getPixelForValue(dataX) + chartArea.left;
-    
-    // Show vertical line
-    const vertLine = document.getElementById('verticalLine');
-    if (vertLine) {
-        vertLine.style.left = xPixel + 'px';
-        vertLine.style.display = 'block';
-    }
-}
+        function clearMapHighlight() {
+            if (highlightMarker) {
+                mapInstance.removeLayer(highlightMarker);
+                highlightMarker = null;
+            }
+        }
 
-function clearMapHighlight() {
-    if (highlightMarker) {
-        mapInstance.removeLayer(highlightMarker);
-        highlightMarker = null;
-    }
-    hoveredPointIndex = -1;
-}
-
-function clearChartHighlight() {
-    const vertLine = document.getElementById('verticalLine');
-    if (vertLine) {
-        vertLine.style.display = 'none';
-    }
-}
-
-function haversineDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-}
-</script>
-<footer style="background: #2c3e50; color: white; padding: 40px 20px; text-align: center; margin-top: 60px;"><p>&copy; 2024 Muni Trails. Share your mountain adventures.</p></footer>
+        function haversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+    </script>
 </body>
 </html>

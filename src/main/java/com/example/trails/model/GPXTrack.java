@@ -29,9 +29,7 @@ public class GPXTrack {
     @Column(nullable = false, length = 32)
     private GPXTrackStatus status;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 32)
-    private Visibility visibility;
+    
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     // Existing installations use created_by_id; use it for all new tracks.
@@ -115,9 +113,7 @@ public class GPXTrack {
         return status;
     }
 
-    public Visibility getVisibility() {
-        return visibility;
-    }
+    
 
     public User getCreatedBy() {
         return createdBy;
@@ -206,9 +202,7 @@ public class GPXTrack {
         this.status = status;
     }
 
-    public void setVisibility(Visibility visibility) {
-        this.visibility = visibility;
-    }
+    
 
     public void setCreatedBy(User createdBy) {
         this.createdBy = createdBy;
@@ -277,4 +271,5 @@ public class GPXTrack {
     public void setDifficultyMin(String difficultyMin) { this.difficultyMin = difficultyMin; }
     public void setDifficultyMax(String difficultyMax) { this.difficultyMax = difficultyMax; }
 }
+
 

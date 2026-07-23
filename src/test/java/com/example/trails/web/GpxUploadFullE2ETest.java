@@ -275,7 +275,7 @@ class GpxUploadFullE2ETest {
                 .orElseThrow();
 
         // Step 2: Edit tour details
-        String updateRequest = "{\"name\":\"Updated Name\",\"type\":\"TRAIL\"," +
+        String updateRequest = "{\"name\":\"Updated Name\",\"type\":\"UPHILL\"," +
                 "\"visibility\":\"PRIVATE\",\"overallRating\":9,\"exposition\":7," +
                 "\"uphillRating\":8,\"rideAgain\":true,\"sections\":[]}";
 
@@ -294,7 +294,7 @@ class GpxUploadFullE2ETest {
                 .orElseThrow(() -> new AssertionError("Track should exist"));
 
         assertEquals("Updated Name", updatedTrack.getName(), "Name should be updated");
-        assertEquals(GPXTrackType.TOUR, updatedTrack.getType(), "Type should be updated");
+        assertEquals(GPXTrackType.UPHILL, updatedTrack.getType(), "Type should be updated to UPHILL");
         assertEquals(Visibility.PRIVATE, updatedTrack.getVisibility(), "Visibility should be updated");
         assertEquals(9, updatedTrack.getOverallRating(), "Rating should be updated");
     }

@@ -286,8 +286,8 @@ public class GpxUploadController {
         GPXTrack track = new GPXTrack();
         track.setName(name);
         track.setType(GPXTrackType.valueOf(type.toUpperCase()));
-        track.setStatus(GPXTrackStatus.DRAFT);
-        track.setVisibility(Visibility.PUBLIC);
+        track.setStatus(GPXTrackStatus.PUBLISHED);
+        // Visibility removed
         track.setCreatedBy(user);
         track.setLastEditedBy(user);
         if (data.getStartLat() != null) { track.setStartLat(data.getStartLat()); track.setStartLon(data.getStartLon()); }
@@ -646,3 +646,4 @@ public class GpxUploadController {
         double getElevation() { return elevation; }
     }
 }
+
