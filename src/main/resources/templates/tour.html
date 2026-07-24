@@ -209,7 +209,7 @@
             font-size: 1.2rem;
         }
         
-        #verticalLine {
+                #verticalLine {
             position: absolute;
             top: 15px;
             width: 3px;
@@ -221,6 +221,37 @@
             box-shadow: 0 0 8px rgba(102, 126, 234, 0.4);
             border-radius: 2px;
         }
+
+        .description-text { white-space: pre-wrap; word-break: break-word; }
+        .comments-list { display: flex; flex-direction: column; gap: 12px; }
+        .comment-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .comment-author { color: #667eea; }
+        .comment-date { color: #999; font-size: 0.85rem; font-weight: normal; }
+        .comment-delete-btn {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 2px 6px;
+            transition: all 0.2s;
+        }
+        .comment-delete-btn:hover { text-decoration: underline; }
+        .comment-text { color: #333; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
         
         @media (max-width: 576px) {
             .hero {
@@ -240,7 +271,7 @@
             <div class="container-fluid">
                 <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
                     <div class="flex-grow-1">
-                        <h1 th:text="${tour.name}">Tour Name</h1>
+                        <h1 id="tourTitle" th:text="${tour.name}">Tour Name</h1>
                         <div>
                             <span class="badge bg-light text-primary me-2 fs-6" th:text="${tour.type}">TOUR</span>
                             <span class="badge bg-warning text-dark fs-6" th:if="${tour.status == 'DRAFT'}">Draft</span>
@@ -314,6 +345,30 @@
                     <div class="legend-item">
                         <div class="legend-color downhill"></div>
                         <span>Downhill Sections</span>
+                    </div>
+                </div>
+
+                <!-- DESCRIPTION SECTION -->
+                <div id="descriptionSection" class="mt-4">
+                    <h3>?? Description</h3>
+                    <div id="tourDescription" class="description-text" style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea; line-height: 1.6;">
+                        <p class="text-muted">No description provided.</p>
+                    </div>
+                </div>
+
+                <!-- COMMENTS SECTION -->
+                <div id="commentsSection" class="mt-5">
+                    <h3>?? Comments</h3>
+                    
+                    <!-- Comment Input -->
+                    <div class="comment-form mt-3 mb-4" style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                        <textarea id="commentInput" class="form-control" placeholder="Share your thoughts about this tour..." rows="3" maxlength="4000"></textarea>
+                        <button id="postCommentBtn" class="btn mt-2" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none;">Post Comment</button>
+                    </div>
+
+                    <!-- Comments List -->
+                    <div id="commentsList" class="comments-list">
+                        <p class="text-muted text-center py-4">No comments yet. Be the first to share!</p>
                     </div>
                 </div>
             </div>
@@ -606,6 +661,106 @@
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             return R * c;
         }
+
+        // Comments functionality
+        async function loadComments(trackId) {
+            try {
+                const response = await fetch(`/api/v1/comments/track/${trackId}`);
+                if (!response.ok) return;
+                
+                const comments = await response.json();
+                renderComments(comments);
+            } catch (e) {
+                console.error('Error loading comments:', e);
+            }
+        }
+
+        function renderComments(comments) {
+            const list = document.getElementById('commentsList');
+            
+            if (comments.length === 0) {
+                list.innerHTML = '<p class="text-muted text-center py-4">No comments yet. Be the first to share!</p>';
+                return;
+            }
+            
+            list.innerHTML = comments.map(c => `
+                <div class="comment-item">
+                    <div class="comment-header">
+                        <span><span class="comment-author">${escapeHtml(c.author)}</span> <span class="comment-date">${new Date(c.createdAt).toLocaleDateString()}</span></span>
+                        <button class="comment-delete-btn" onclick="deleteComment('${c.id}', this)" title="Delete">???</button>
+                    </div>
+                    <div class="comment-text">${escapeHtml(c.text)}</div>
+                </div>
+            `).join('');
+        }
+
+        function setupCommentHandlers(trackId) {
+            const postBtn = document.getElementById('postCommentBtn');
+            const input = document.getElementById('commentInput');
+            
+            postBtn.addEventListener('click', async () => {
+                const text = input.value.trim();
+                if (!text) {
+                    alert('Please enter a comment');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`/api/v1/comments/track/${trackId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text })
+                    });
+                    
+                    if (response.ok) {
+                        input.value = '';
+                        loadComments(trackId);
+                    } else {
+                        alert('Failed to post comment');
+                    }
+                } catch (e) {
+                    console.error('Error posting comment:', e);
+                    alert('Error posting comment');
+                }
+            });
+            
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                    postBtn.click();
+                }
+            });
+        }
+
+        async function deleteComment(commentId, btn) {
+            if (!confirm('Delete this comment?')) return;
+            
+            try {
+                const response = await fetch(`/api/v1/comments/${commentId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    btn.closest('.comment-item').remove();
+                } else {
+                    alert('Failed to delete comment');
+                }
+            } catch (e) {
+                console.error('Error deleting comment:', e);
+                alert('Error deleting comment');
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
     </script>
 </body>
 </html>
+
+
+
+
+
+
