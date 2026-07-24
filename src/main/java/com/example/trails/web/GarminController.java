@@ -327,7 +327,7 @@ public class GarminController {
             GPXTrack track = new GPXTrack();
             track.setName(name != null && !name.isBlank() ? name : gpxData.getName());
             track.setType(GPXTrackType.valueOf(type.toUpperCase()));
-            track.setStatus(GPXTrackStatus.DRAFT);
+            track.setStatus(GPXTrackStatus.PUBLISHED);
             // Visibility removed
             track.setCreatedBy(user);
             track.setLastEditedBy(user);
@@ -375,7 +375,7 @@ public class GarminController {
                 extracted.setName(section.getName() == null || section.getName().isBlank()
                         ? saved.getName() + " – " + sectionType.toLowerCase() : section.getName());
                 extracted.setType(GPXTrackType.valueOf(sectionType.toUpperCase()));
-                extracted.setStatus(GPXTrackStatus.DRAFT);
+                extracted.setStatus(GPXTrackStatus.PUBLISHED);
                 // Visibility removed
                 extracted.setCreatedBy(user);
                 extracted.setLastEditedBy(user);
@@ -427,3 +427,4 @@ public class GarminController {
         return result;
     }
 }
+
