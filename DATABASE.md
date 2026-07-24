@@ -4,7 +4,9 @@
 
 TrailsSpring uses **PostgreSQL** with **Flyway** for schema migrations. The database is named `trails` (configurable via `application.properties`).
 
-The design centers around **GPX tracks** (bike/mountainbike tours) stored with a **JOINED inheritance** strategy: a base `gpx_track` table holds all common columns, while subclass tables (`tour`, `trail`, `uphill`, `downhill`) store only the primary key referencing the base row.
+The design centers around **GPX tracks** (bike/mountainbike tours) stored with a **JOINED inheritance** strategy: a base `gpx_track` table holds all common columns, while subclass tables (`tour`, `trail`, `uphill`, `downhill`) store only the primary key referencing the base row. A `track_kind` discriminator column (`VARCHAR(31)`) distinguishes the concrete Java entity type at the row level.
+
+> **Legacy columns** from the initial schema (V1) remain in the database but are no longer actively written by the application: `gpx_file_name`, `length_meters`, `number_of_track_points`, `start_latitude`, `start_longitude`, `end_latitude`, `end_longitude`, `start_elevation_m`, `end_elevation_m`, `track_type` (replaced by `type`), `created_by_user_id` (replaced by `created_by_id`). Hibernate's `ddl-auto=update` does not drop unused columns, so these are preserved for backwards compatibility.
 
 ---
 
@@ -37,10 +39,11 @@ erDiagram
 
     gpx_track {
         uuid id PK
+        varchar track_kind "Discriminator: Tour | Trail | Uphill | Downhill"
         varchar type "TOUR | UPHILL | DOWNHILL"
         varchar status "DRAFT | PUBLISHED | ARCHIVED"
         varchar visibility "PRIVATE | FRIENDS | PUBLIC"
-        varchar name
+        varchar name "255 chars"
         uuid created_by_id FK
         uuid last_edited_by_id FK "nullable"
         text bounding_box "nullable"
@@ -49,7 +52,7 @@ erDiagram
         double precision elevation_loss_meters
         double precision highest_point_altitude_meters
         double precision lowest_point_altitude_meters
-        bytea gpx_file "nullable"
+        bytea gpx_file "nullable, LAZY"
         varchar gpx_file_checksum "nullable"
         int overall_rating "0..10"
         int exposition "0..10"
@@ -133,8 +136,8 @@ erDiagram
 |---------------|---------------|-------------------------|------------------------------------------------|
 | `id`          | `UUID`        | PK                      | Generated automatically                        |
 | `username`    | `VARCHAR(64)` | UNIQUE, NOT NULL        | Login name                                     |
-| `password_hash` | `VARCHAR`   | NOT NULL                | BCrypt hashed password                         |
-| `role`        | `VARCHAR(32)` | NOT NULL                | `ADMIN` or `USER`                              |
+| `password_hash` | `VARCHAR(255)` | NOT NULL                | BCrypt hashed password                         |
+| `role`        | `VARCHAR(64)` | NOT NULL                | `ADMIN` or `USER` (entity: `VARCHAR(32)`)      |
 | `created_at`  | `TIMESTAMPTZ` | NOT NULL, DEFAULT now() |                                                |
 | `updated_at`  | `TIMESTAMPTZ` | NOT NULL, DEFAULT now() | Updated on every modification                  |
 
@@ -152,11 +155,12 @@ erDiagram
 | Column                    | Type              | Constraints       | Notes                                              |
 |---------------------------|-------------------|-------------------|----------------------------------------------------|
 | `id`                      | `UUID`            | PK                |                                                    |
+| `track_kind`              | `VARCHAR(31)`     |                   | Hibernate discriminator (`Tour`, `Trail`, `Uphill`, `Downhill`) |
 | `type` (legacy: `track_type`) | `VARCHAR(32)` | NOT NULL          | Enum: `TOUR`, `UPHILL`, `DOWNHILL`                 |
 | `status`                  | `VARCHAR(32)`     | NOT NULL          | `DRAFT`, `PUBLISHED`, `ARCHIVED`                   |
 | `visibility`              | `VARCHAR(32)`     | NOT NULL          | `PRIVATE`, `FRIENDS`, `PUBLIC`                     |
-| `name`                    | `VARCHAR(200)`    | NOT NULL          | Track display name                                 |
-| `created_by_id`           | `UUID`            | NOT NULL → `app_user` | Creator                                        |
+| `name`                    | `VARCHAR(255)`    | NOT NULL          | Track display name                                 |
+| `created_by_id`           | `UUID`            | NOT NULL → `app_user` | Creator (legacy `created_by_user_id` exists)   |
 | `last_edited_by_id`       | `UUID`            | → `app_user`      | nullable, last modifier                            |
 | `created_at`              | `TIMESTAMPTZ`     | NOT NULL          |                                                    |
 | `updated_at`              | `TIMESTAMPTZ`     | NOT NULL          |                                                    |
