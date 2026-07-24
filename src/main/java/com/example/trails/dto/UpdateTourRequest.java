@@ -1,5 +1,6 @@
 package com.example.trails.dto;
 
+import com.example.trails.model.Visibility;
 import java.util.List;
 
 /**
@@ -9,6 +10,7 @@ public class UpdateTourRequest {
     private String name;
     private String type;
     private String description;
+    private Visibility visibility;
     private int overallRating;
     private int exposition;
     private int uphillRating;
@@ -23,6 +25,9 @@ public class UpdateTourRequest {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public Visibility getVisibility() { return visibility; }
+    public void setVisibility(Visibility visibility) { this.visibility = visibility; }
 
     public int getOverallRating() { return overallRating; }
     public void setOverallRating(int overallRating) { this.overallRating = overallRating; }

@@ -87,7 +87,7 @@ public class TrackService {
         GPXTrack track = new GPXTrack();
         track.setName(name);
         track.setType(type);
-        track.setStatus(GPXTrackStatus.PUBLISHED);
+        track.setStatus(GPXTrackStatus.DRAFT);
         track.setCreatedBy(createdBy);
         track.setLastEditedBy(createdBy);
         track.setStartLat(startLat);
@@ -125,6 +125,7 @@ public class TrackService {
         
         if (req.getName() != null) track.setName(req.getName());
         if (req.getType() != null) track.setType(GPXTrackType.valueOf(req.getType().toUpperCase()));
+        if (req.getVisibility() != null) track.setVisibility(req.getVisibility());
         track.setOverallRating(req.getOverallRating());
         track.setExposition(req.getExposition());
         track.setUphillRating(req.getUphillRating());

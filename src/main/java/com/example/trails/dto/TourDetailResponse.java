@@ -15,6 +15,7 @@ public class TourDetailResponse {
     private String name;
     private String type;
     private String description;
+    private String visibility;
     private double distanceMeters;
     private double elevationGainMeters;
     private double elevationLossMeters;
@@ -32,6 +33,7 @@ public class TourDetailResponse {
         this.id = track.getId();
         this.name = track.getName();
         this.type = track.getType() != null ? track.getType().toString() : "";
+        this.visibility = track.getVisibility() != null ? track.getVisibility().name() : null;
         this.distanceMeters = track.getDistanceMeters();
         this.elevationGainMeters = track.getElevationGainMeters();
         this.elevationLossMeters = track.getElevationLossMeters();
@@ -56,6 +58,9 @@ public class TourDetailResponse {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public String getVisibility() { return visibility; }
+    public void setVisibility(String visibility) { this.visibility = visibility; }
 
     public double getDistanceMeters() { return distanceMeters; }
     public void setDistanceMeters(double distanceMeters) { this.distanceMeters = distanceMeters; }
