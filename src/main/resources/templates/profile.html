@@ -134,7 +134,7 @@
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item"><a class="nav-link" id="nav-home" href="/landing">ğŸ  Home</a></li>
                 <li class="nav-item"><a class="nav-link" id="nav-explore" href="/tours">ğŸ” Explore Tours</a></li>
-                <li class="nav-item"><a class="nav-link" id="nav-upload" href="/upload">ğŸ“¤ Upload Tour</a></li>
+                <li class="nav-item"><a class="nav-link" id="nav-upload" href="/profile">ğŸ“¤ Upload Tour</a></li>
                 <li class="nav-item"><a class="nav-link" id="nav-profile" href="/profile">ğŸ‘¤ My Profile</a></li>
                 <li class="nav-item">
                     <form method="POST" action="/logout" style="display:inline;">
@@ -504,7 +504,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Garmin Password</label>
-                        <input type="password" id="credPassword" class="form-control" placeholder="••••••••" required>
+                        <input type="password" id="credPassword" class="form-control" placeholder="ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" required>
                         <small class="text-muted d-block mt-1">Your password is encrypted before storage</small>
                     </div>
                     <div id="credentialsError" class="alert alert-danger d-none"></div>
@@ -744,12 +744,12 @@ function renderTrackMap() {
     trackPolylines = {};
     
     // Initialize map centered on first point
-        console.log("First point for map:", firstPoint);
+    const firstPoint = currentTrackData.points[0];
+    console.log("First point for map:", firstPoint);
     if (!firstPoint || !firstPoint.lat || !firstPoint.lon) {
         console.error("Invalid first point:", firstPoint);
         return;
     }
-    const firstPoint = currentTrackData.points[0];
     mapInstance = L.map('sectionEditorMap', { scrollWheelZoom: true }).setView(
         [firstPoint.lat, firstPoint.lon],
         12
@@ -1396,6 +1396,21 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 </body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
