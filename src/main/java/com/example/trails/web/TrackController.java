@@ -223,12 +223,6 @@ public class TrackController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new CommentResponse(comment));
     }
 
-    @DeleteMapping("/comments/{commentId}")
-    public ResponseEntity<Void> deleteComment(@PathVariable UUID commentId) {
-        commentService.deleteComment(commentId);
-        return ResponseEntity.noContent().build();
-    }
-
     // Helper DTO for paginated response
     public static class TrackPageResponse {
         private List<TrackResponse> content;
