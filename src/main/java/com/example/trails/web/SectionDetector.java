@@ -6,14 +6,22 @@ import java.util.List;
 
 /**
  * Section detection helper - detects uphill/downhill sections from GPX data.
- * Fixed to extend uphill sections through brief neutral segments to reach the peak.
+ * Improved deduplication: merges overlapping sections across TOUR, UPHILL, DOWNHILL types.
  */
 public class SectionDetector {
+
+    private static final double OVERLAP_THRESHOLD = 0.8; // 80% overlap = same section
+    private static final double TOUR_OVERLAP_THRESHOLD = 0.5; // 50% for TOUR vs sections
+    private static final int MIN_ELEVATION_GAIN = 50;    // meters
+    private static final int MIN_DISTANCE = 150;         // meters
+    private static final double ELEVATION_THRESHOLD_BASE = 0.3;
+    private static final double ELEVATION_THRESHOLD_FACTOR = 1.0;
 
     /**
      * Finds sustained elevation changes from GPX track points.
      * Uphill sections extend through brief flat/neutral segments to the peak.
      * Downhill sections extend through brief flat segments to the lowest point.
+     * Improved: merges overlapping and duplicate sections across all types (TOUR, UPHILL, DOWNHILL).
      */
     static List<UploadSectionRequest> detectSections(List<GpxUploadController.TrackPoint> points) {
         List<UploadSectionRequest> sections = new ArrayList<>();
@@ -31,7 +39,7 @@ public class SectionDetector {
             // Distance-dependent threshold
             double distMeters = haversineDistance(prev.getLat(), prev.getLon(), 
                                                    curr.getLat(), curr.getLon()) * 1000.0;
-            double threshold = 0.3 + (distMeters / 1000.0) * 1.0;
+            double threshold = ELEVATION_THRESHOLD_BASE + (distMeters / 1000.0) * ELEVATION_THRESHOLD_FACTOR;
 
             int nextDirection = elevChange > threshold ? 1 : elevChange < -threshold ? -1 : 0;
 
@@ -66,7 +74,7 @@ public class SectionDetector {
             }
         }
 
-        
+        // Close active section at end of tour
         if (currentDirection != 0) {
             int endIndex = points.size() - 1;
             if (neutralStartIndex != -1) {
@@ -75,7 +83,128 @@ public class SectionDetector {
             addSectionIfMeaningful(sections, points, currentStartIndex, endIndex, currentDirection);
         }
 
-        return mergeConsecutiveSameType(sections);
+        // Merge overlapping and duplicate sections
+        return deduplicateSections(sections, points);
+    }
+
+    /**
+     * Merge sections that are duplicates or overlapping.
+     * Checks overlap across TOUR, UPHILL, and DOWNHILL types:
+     * - UPHILL vs UPHILL: 80% overlap = same section
+     * - DOWNHILL vs DOWNHILL: 80% overlap = same section
+     * - UPHILL vs TOUR: 50% overlap = UPHILL is part of TOUR
+     * - DOWNHILL vs TOUR: 50% overlap = DOWNHILL is part of TOUR
+     */
+    private static List<UploadSectionRequest> deduplicateSections(List<UploadSectionRequest> sections,
+                                                                   List<GpxUploadController.TrackPoint> points) {
+        List<UploadSectionRequest> merged = new ArrayList<>();
+        
+        for (UploadSectionRequest newSection : sections) {
+            boolean isDuplicate = false;
+            
+            // Check against all existing merged sections
+            for (int i = 0; i < merged.size(); i++) {
+                UploadSectionRequest existing = merged.get(i);
+                
+                double overlapRatio = calculateOverlapRatio(existing, newSection);
+                double threshold = getOverlapThreshold(existing.getType(), newSection.getType());
+                
+                if (overlapRatio >= threshold) {
+                    // Determine merge strategy based on types
+                    if (existing.getType().equals(newSection.getType())) {
+                        // Same type: keep the longer one
+                        if (newSection.getEndIndex() - newSection.getStartIndex() >
+                            existing.getEndIndex() - existing.getStartIndex()) {
+                            merged.set(i, newSection);
+                        }
+                    } else if (isTourContainingSection(existing, newSection)) {
+                        // TOUR contains section: keep TOUR
+                        // (TOUR should remain unchanged)
+                    } else if (isTourContainingSection(newSection, existing)) {
+                        // Section is part of TOUR: keep TOUR
+                        existing.setStartIndex(Math.min(existing.getStartIndex(), newSection.getStartIndex()));
+                        existing.setEndIndex(Math.max(existing.getEndIndex(), newSection.getEndIndex()));
+                    } else if ("TOUR".equals(existing.getType()) || "TOUR".equals(newSection.getType())) {
+                        // One is TOUR, merge by expanding boundaries
+                        int start = Math.min(existing.getStartIndex(), newSection.getStartIndex());
+                        int end = Math.max(existing.getEndIndex(), newSection.getEndIndex());
+                        existing.setStartIndex(start);
+                        existing.setEndIndex(end);
+                    } else {
+                        // Both UPHILL or both DOWNHILL: keep longer
+                        if (newSection.getEndIndex() - newSection.getStartIndex() >
+                            existing.getEndIndex() - existing.getStartIndex()) {
+                            merged.set(i, newSection);
+                        }
+                    }
+                    isDuplicate = true;
+                    break;
+                }
+            }
+            
+            if (!isDuplicate) {
+                merged.add(newSection);
+            }
+        }
+        
+        return mergeConsecutiveSameType(merged);
+    }
+
+    /**
+     * Determine overlap threshold based on types being compared.
+     * - Same type (UPHILL-UPHILL, etc.): 80% threshold
+     * - TOUR involved: 50% threshold (sections can be part of TOUR)
+     */
+    private static double getOverlapThreshold(String type1, String type2) {
+        if (type1.equals(type2)) {
+            return OVERLAP_THRESHOLD;  // 80%
+        }
+        if ("TOUR".equals(type1) || "TOUR".equals(type2)) {
+            return TOUR_OVERLAP_THRESHOLD;  // 50%
+        }
+        return 1.0;  // No merge for unrelated types
+    }
+
+    /**
+     * Check if one section type can contain another.
+     */
+    private static boolean isTourContainingSection(UploadSectionRequest container, UploadSectionRequest section) {
+        if (!"TOUR".equals(container.getType())) {
+            return false;
+        }
+        if ("TOUR".equals(section.getType())) {
+            return false;
+        }
+        
+        // TOUR contains section if section is fully within TOUR bounds
+        return section.getStartIndex() >= container.getStartIndex() &&
+               section.getEndIndex() <= container.getEndIndex();
+    }
+
+    /**
+     * Calculate overlap ratio between two sections.
+     * Returns 0-1 where 1 means identical, 0 means no overlap.
+     */
+    private static double calculateOverlapRatio(UploadSectionRequest section1, UploadSectionRequest section2) {
+        int start1 = section1.getStartIndex();
+        int end1 = section1.getEndIndex();
+        int start2 = section2.getStartIndex();
+        int end2 = section2.getEndIndex();
+        
+        // Calculate overlap
+        int overlapStart = Math.max(start1, start2);
+        int overlapEnd = Math.min(end1, end2);
+        
+        if (overlapEnd < overlapStart) {
+            return 0; // No overlap
+        }
+        
+        int overlapLength = overlapEnd - overlapStart;
+        int len1 = end1 - start1;
+        int len2 = end2 - start2;
+        int maxLen = Math.max(len1, len2);
+        
+        return (double) overlapLength / maxLen;
     }
 
     /**
@@ -133,7 +262,7 @@ public class SectionDetector {
         }
 
         // Thresholds: 50m elevation gain/loss, 150m distance
-        if (Math.abs(elevChange) < 50 || distance < 150) return;
+        if (Math.abs(elevChange) < MIN_ELEVATION_GAIN || distance < MIN_DISTANCE) return;
 
         UploadSectionRequest section = new UploadSectionRequest();
         section.setStartIndex(start);
