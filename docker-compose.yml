@@ -3,9 +3,9 @@ services:
     image: postgres:16
     container_name: trails-postgres
     environment:
-      POSTGRES_DB: trails
-      POSTGRES_USER: trails
-      POSTGRES_PASSWORD: trails
+      POSTGRES_DB: ${POSTGRES_DB:-trails}
+      POSTGRES_USER: ${POSTGRES_USER:-trails}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-trails}
     ports:
       - "5432:5432"
     volumes:
@@ -41,12 +41,12 @@ services:
       garmin-service:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/trails
-      SPRING_DATASOURCE_USERNAME: trails
-      SPRING_DATASOURCE_PASSWORD: trails
-      GARMIN_SERVICE_URL: http://garmin-service:5000
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://db:5432/trails}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-trails}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-trails}
+      GARMIN_SERVICE_URL: ${GARMIN_SERVICE_URL:-http://garmin-service:5000}
     ports:
-      - "8080:8080"
+      - "${APP_PORT:-8080}:8080"
     restart: unless-stopped
 
 volumes:
