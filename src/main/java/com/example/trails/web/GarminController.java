@@ -254,6 +254,8 @@ public class GarminController {
         String token  = (String) body.get("token");
         String type   = (String) body.get("type");
         String name   = (String) body.get("name");
+        String difficultyMin = (String) body.get("difficultyMin");
+        String difficultyMax = (String) body.get("difficultyMax");
 
         if (token == null || token.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "token required"));
@@ -325,7 +327,7 @@ public class GarminController {
             GPXTrack track = new GPXTrack();
             track.setName(name != null && !name.isBlank() ? name : gpxData.getName());
             track.setType(GPXTrackType.valueOf(type.toUpperCase()));
-            track.setStatus(GPXTrackStatus.PUBLISHED);
+            track.setStatus(GPXTrackStatus.DRAFT);
             // Visibility removed
             track.setCreatedBy(user);
             track.setLastEditedBy(user);
@@ -344,6 +346,16 @@ public class GarminController {
             track.setUphillRating(5);
             track.setRideAgain(false);
             GPXTrack saved = trackRepo.save(track);
+            
+            // Apply difficulty if provided
+            try {
+                if (applyDifficulty(saved, type, difficultyMin, difficultyMax)) {
+                    saved = trackRepo.save(saved);
+                }
+            } catch (Exception e) {
+                logger.warn("Could not apply difficulty", e);
+            }
+            
             logger.info("Track saved with ID: {}, GPX size: {} bytes", saved.getId(), saved.getGpxFile() != null ? saved.getGpxFile().length : 0);
             
             // Save sections if provided
@@ -363,7 +375,7 @@ public class GarminController {
                 extracted.setName(section.getName() == null || section.getName().isBlank()
                         ? saved.getName() + " – " + sectionType.toLowerCase() : section.getName());
                 extracted.setType(GPXTrackType.valueOf(sectionType.toUpperCase()));
-                extracted.setStatus(GPXTrackStatus.PUBLISHED);
+                extracted.setStatus(GPXTrackStatus.DRAFT);
                 // Visibility removed
                 extracted.setCreatedBy(user);
                 extracted.setLastEditedBy(user);
@@ -394,7 +406,24 @@ public class GarminController {
             return ResponseEntity.status(500).body(Map.of("error", "Failed to save track: " + e.getMessage()));
         }
     }
+
+    static boolean applyDifficulty(GPXTrack track, String type, String minimum, String maximum) {
+        if (!"TOUR".equalsIgnoreCase(type) && !"DOWNHILL".equalsIgnoreCase(type)) return false;
+        String min = difficulty(minimum);
+        String max = difficulty(maximum);
+        if (min == null && max == null) return false;
+        if (min == null) min = max;
+        if (max == null) max = min;
+        if (min.compareTo(max) > 0) throw new IllegalArgumentException("Minimum difficulty cannot exceed maximum difficulty.");
+        track.setDifficultyMin(min);
+        track.setDifficultyMax(max);
+        return true;
+    }
+
+    private static String difficulty(String value) {
+        if (value == null || value.isBlank()) return null;
+        String result = value.trim().toUpperCase();
+        if (!result.matches("S[0-5]")) throw new IllegalArgumentException("Difficulty must be S0 through S5.");
+        return result;
+    }
 }
-
-
-
