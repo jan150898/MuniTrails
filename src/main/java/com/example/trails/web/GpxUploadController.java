@@ -286,7 +286,7 @@ public class GpxUploadController {
         GPXTrack track = new GPXTrack();
         track.setName(name);
         track.setType(GPXTrackType.valueOf(type.toUpperCase()));
-        track.setStatus(GPXTrackStatus.PUBLISHED);
+        track.setStatus(GPXTrackStatus.DRAFT);
         // Visibility removed
         track.setCreatedBy(user);
         track.setLastEditedBy(user);
@@ -646,4 +646,5 @@ public class GpxUploadController {
         double getElevation() { return elevation; }
     }
 }
+
 
