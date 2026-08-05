@@ -91,10 +91,11 @@
         </dependency>
 
 
+        <!-- H2 Database (for testing and Cloud Run profile) -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>test</scope>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- Test -->
