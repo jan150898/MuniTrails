@@ -89,6 +89,11 @@
             <artifactId>flyway-database-postgresql</artifactId>
             <version>10.15.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-secretmanager</artifactId>
+            <version>2.8.0</version>
+        </dependency>
 
         <!-- H2 Database (for testing and Cloud Run profile) -->
         <dependency>
