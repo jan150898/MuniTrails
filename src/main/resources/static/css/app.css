@@ -1,0 +1,103 @@
+/* Shared responsive theme for Muni Trails. Loaded after page-specific styles. */
+:root {
+    color-scheme: light;
+    --app-bg: #f4f7fb;
+    --app-surface: #ffffff;
+    --app-surface-muted: #eef2f7;
+    --app-text: #1e293b;
+    --app-text-muted: #64748b;
+    --app-border: #dce3ed;
+    --app-shadow: 0 10px 30px rgba(15, 23, 42, .10);
+}
+
+html { min-width: 320px; }
+body {
+    background: var(--app-bg);
+    color: var(--app-text);
+    overflow-x: hidden;
+}
+
+img, svg, canvas { max-width: 100%; }
+button, input, select, textarea { font: inherit; }
+
+.theme-toggle {
+    align-items: center;
+    background: rgba(255, 255, 255, .16);
+    border: 1px solid rgba(255, 255, 255, .5);
+    border-radius: 999px;
+    color: #fff;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: .9rem;
+    gap: .45rem;
+    margin: .25rem .5rem;
+    padding: .4rem .75rem;
+}
+.theme-toggle:hover { background: rgba(255, 255, 255, .27); }
+.theme-toggle:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+
+@media (min-width: 992px) {
+    .navbar .container-fluid { padding-left: clamp(1.5rem, 4vw, 4rem); padding-right: clamp(1.5rem, 4vw, 4rem); }
+    .navbar-nav { align-items: center; }
+}
+
+@media (max-width: 991.98px) {
+    .navbar-collapse { padding: .75rem 0; }
+    .navbar-nav { gap: .25rem; }
+    .nav-link, .nav-link-logout { margin: 0 !important; padding: .7rem .85rem !important; }
+    .theme-toggle { margin: .45rem .85rem; }
+}
+
+@media (max-width: 767.98px) {
+    .hero-section, .hero { padding: 3.5rem 1.25rem !important; }
+    .hero-title, .hero h1 { font-size: clamp(2rem, 10vw, 3rem) !important; }
+    .hero-subtitle { font-size: 1rem !important; }
+    .btn-hero { display: block; margin: .75rem auto !important; max-width: 22rem; width: 100%; }
+    .featured-section, .upload-section, .stats-section { padding: 3.5rem 1.25rem !important; }
+    .section-title { font-size: clamp(1.8rem, 8vw, 2.4rem) !important; margin-bottom: 3rem !important; }
+    .tour-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
+    .tour-card-body, .tour-card-header { padding: 1.25rem !important; }
+    .wrap { margin: 1.5rem 1rem !important; padding: 1.25rem !important; }
+    .footer { margin-top: 2.5rem !important; padding: 1.75rem 1rem !important; }
+    .leaflet-container, #map { max-height: 52vh; }
+}
+
+[data-theme="dark"] {
+    color-scheme: dark;
+    --app-bg: #101827;
+    --app-surface: #182235;
+    --app-surface-muted: #222f45;
+    --app-text: #e5edf8;
+    --app-text-muted: #aebdd1;
+    --app-border: #34445e;
+    --app-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+}
+[data-theme="dark"] body { background: var(--app-bg) !important; color: var(--app-text); }
+[data-theme="dark"] .stats-section,
+[data-theme="dark"] .upload-section,
+[data-theme="dark"] .tour-card,
+[data-theme="dark"] .wrap,
+[data-theme="dark"] .modal-content,
+[data-theme="dark"] .card,
+[data-theme="dark"] .tour-list-container,
+[data-theme="dark"] .filter-container { background: var(--app-surface) !important; color: var(--app-text) !important; box-shadow: var(--app-shadow); }
+[data-theme="dark"] .featured-section { background: var(--app-bg) !important; }
+[data-theme="dark"] .section-title,
+[data-theme="dark"] .tour-metric-value,
+[data-theme="dark"] .upload-text,
+[data-theme="dark"] .form-label,
+[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3, [data-theme="dark"] h4, [data-theme="dark"] h5, [data-theme="dark"] p { color: var(--app-text); }
+[data-theme="dark"] .hero, [data-theme="dark"] .hero *,
+[data-theme="dark"] .hero-section, [data-theme="dark"] .hero-section * { color: #fff; }
+[data-theme="dark"] .stat-label,
+[data-theme="dark"] .tour-metric-label,
+[data-theme="dark"] .upload-subtext,
+[data-theme="dark"] .text-muted { color: var(--app-text-muted) !important; }
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select,
+[data-theme="dark"] textarea,
+[data-theme="dark"] input,
+[data-theme="dark"] select { background-color: var(--app-surface-muted); border-color: var(--app-border); color: var(--app-text); }
+[data-theme="dark"] .form-control::placeholder { color: #91a0b5; }
+[data-theme="dark"] .table { --bs-table-bg: var(--app-surface); --bs-table-color: var(--app-text); --bs-table-border-color: var(--app-border); }
+[data-theme="dark"] .modal-footer, [data-theme="dark"] .modal-body { border-color: var(--app-border); }
