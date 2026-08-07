@@ -1,8 +1,8 @@
 package com.example.trails.config;
 
-import com.google.cloud.secretmanager.v1.AccessSecretVersionRequest;
-import com.google.cloud.secretmanager.v1.SecretManagerServiceClient;
 import org.springframework.boot.context.event.ApplicationContextInitializedEvent;
+import org.springframework.boot.context.properties.bind.Bindable;
+import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
@@ -12,8 +12,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Load secrets from Google Cloud Secret Manager on application startup (Cloud Run).
- * Falls back to environment variables if Google Cloud is unavailable (Fly.io, local).
+ * Load database credentials from environment variables at application startup.
+ * Works on Fly.io, Cloud Run, and local development.
  */
 @Component
 public class SecretManagerInitializer implements ApplicationListener<ApplicationContextInitializedEvent> {
@@ -25,54 +25,35 @@ public class SecretManagerInitializer implements ApplicationListener<Application
         
         if ("prod".equals(activeProfile)) {
             try {
-                Map<String, Object> secrets = loadSecrets();
-                MapPropertySource propertySource = new MapPropertySource("secretsSource", secrets);
-                env.getPropertySources().addFirst(propertySource);
+                // Load from environment variables (Fly.io, Cloud Run, local)
+                String dbHost = System.getenv("DB_HOST");
+                String dbUsername = System.getenv("DB_USERNAME");
+                String dbPassword = System.getenv("DB_PASSWORD");
+                
+                System.out.println("=== SecretManagerInitializer ===");
+                System.out.println("DB_HOST: " + (dbHost != null ? "SET" : "NULL"));
+                System.out.println("DB_USERNAME: " + (dbUsername != null ? "SET" : "NULL"));
+                System.out.println("DB_PASSWORD: " + (dbPassword != null ? "SET" : "NULL"));
+                
+                if (dbHost == null || dbUsername == null || dbPassword == null) {
+                    System.out.println("WARNING: Database credentials not fully set!");
+                }
+                
+                // Add to Spring environment
+                Map<String, Object> secrets = new HashMap<>();
+                if (dbHost != null) secrets.put("DB_HOST", dbHost);
+                if (dbUsername != null) secrets.put("DB_USERNAME", dbUsername);
+                if (dbPassword != null) secrets.put("DB_PASSWORD", dbPassword);
+                
+                if (!secrets.isEmpty()) {
+                    MapPropertySource propertySource = new MapPropertySource("secretsSource", secrets);
+                    env.getPropertySources().addFirst(propertySource);
+                    System.out.println("Secrets loaded into Spring environment");
+                }
             } catch (Exception e) {
-                throw new RuntimeException("Failed to initialize secrets", e);
+                System.err.println("ERROR loading secrets: " + e.getMessage());
+                e.printStackTrace();
             }
         }
-    }
-
-    private Map<String, Object> loadSecrets() throws Exception {
-        Map<String, Object> secrets = new HashMap<>();
-        
-        // Try Google Cloud Secret Manager first (Cloud Run)
-        try {
-            String projectId = getProjectId();
-            if (projectId != null && !projectId.isEmpty()) {
-                secrets.put("DB_HOST", getSecretFromGCP(projectId, "db-host"));
-                secrets.put("DB_USERNAME", getSecretFromGCP(projectId, "db-username"));
-                secrets.put("DB_PASSWORD", getSecretFromGCP(projectId, "db-password"));
-                return secrets;
-            }
-        } catch (Exception e) {
-            // Fall through to environment variables
-        }
-        
-        // Fall back to environment variables (Fly.io, local, etc.)
-        secrets.put("DB_HOST", System.getenv("DB_HOST"));
-        secrets.put("DB_USERNAME", System.getenv("DB_USERNAME"));
-        secrets.put("DB_PASSWORD", System.getenv("DB_PASSWORD"));
-        
-        return secrets;
-    }
-
-    private String getSecretFromGCP(String projectId, String secretId) throws Exception {
-        try (SecretManagerServiceClient client = SecretManagerServiceClient.create()) {
-            String secretName = String.format("projects/%s/secrets/%s/versions/latest", projectId, secretId);
-            AccessSecretVersionRequest request = AccessSecretVersionRequest.newBuilder()
-                .setName(secretName)
-                .build();
-            return client.accessSecretVersion(request).getPayload().getData().toStringUtf8();
-        }
-    }
-
-    private String getProjectId() {
-        String projectId = System.getenv("GOOGLE_CLOUD_PROJECT");
-        if (projectId != null && !projectId.isEmpty()) {
-            return projectId;
-        }
-        return System.getenv("GCP_PROJECT");
     }
 }
