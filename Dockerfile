@@ -17,4 +17,4 @@ EXPOSE 8080
 # Production profile: Use real PostgreSQL database
 ENV SPRING_PROFILES_ACTIVE=prod
 
-ENTRYPOINT ["java","-jar","app.jar"]
+ENTRYPOINT ["java","-Xmx512m","-Xms256m","-jar","app.jar"]
