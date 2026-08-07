@@ -1,14 +1,13 @@
 package com.example.trails.config;
 
-import org.springframework.boot.context.properties.source.ConfigurationPropertySourcesPropertyResolver;
 import org.springframework.core.env.PropertySource;
+import org.springframework.core.io.support.EncodedResource;
 import org.springframework.core.io.support.PropertySourceFactory;
 import org.springframework.lang.Nullable;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 /**
  * Custom PropertySourceFactory to load database credentials from environment variables
@@ -17,7 +16,7 @@ import java.util.Properties;
 public class SecretsPropertySourceFactory implements PropertySourceFactory {
 
     @Override
-    public PropertySource<?> createPropertySource(@Nullable String name, org.springframework.core.io.Resource resource) throws IOException {
+    public PropertySource<?> createPropertySource(@Nullable String name, EncodedResource resource) throws IOException {
         return new SecretsPropertySource(name != null ? name : "secrets", loadSecretsFromEnvironment());
     }
 
