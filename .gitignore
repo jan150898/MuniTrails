@@ -72,6 +72,12 @@ pip-log.txt
 poetry.lock
 
 # ------------------------------
+# Local utility scripts
+# ------------------------------
+# Contains plaintext passwords - never commit
+HashGenerator.java
+
+# ------------------------------
 # Docker & Local DBs (Crucial Additions)
 # ------------------------------
 **/.docker/
