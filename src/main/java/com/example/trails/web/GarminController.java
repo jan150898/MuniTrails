@@ -23,6 +23,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.security.Principal;
+import java.time.Instant;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.Map;
 import java.util.List;
 
@@ -37,6 +40,10 @@ public class GarminController {
     private final GPXTrackRepository trackRepo;
     private final UserService userService;
     private final GarminActivityCacheRepository cacheRepo;
+    private final ConcurrentMap<String, GarminSession> sessions = new ConcurrentHashMap<>();
+    private static final long SESSION_TTL_SECONDS = 15 * 60;
+
+    private record GarminSession(String username, Instant expiresAt) {}
 
     @Value("${garmin.service.url:http://garmin-service:5000}")
     private String garminServiceUrl;
@@ -50,7 +57,7 @@ public class GarminController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody Map<String, String> body) {
+    public ResponseEntity<String> login(@RequestBody Map<String, String> body, Principal principal) {
         try {
             logger.info("Attempting Garmin login");
             long startTime = System.currentTimeMillis();
@@ -63,6 +70,11 @@ public class GarminController {
             
             long duration = System.currentTimeMillis() - startTime;
             logger.info("Garmin login completed in {} ms", duration);
+            if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
+                String token = mapper.readTree(resp.getBody()).path("token").asText();
+                if (token.isBlank()) return ResponseEntity.status(502).body("{\"error\":\"Garmin service returned an invalid session\"}");
+                sessions.put(token, new GarminSession(principal.getName(), Instant.now().plusSeconds(SESSION_TTL_SECONDS)));
+            }
             return ResponseEntity.status(resp.getStatusCode()).body(resp.getBody());
         } catch (HttpClientErrorException e) {
             logger.warn("Garmin login failed: {} {}", e.getStatusCode(), e.getResponseBodyAsString());
@@ -74,7 +86,9 @@ public class GarminController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestBody Map<String, String> body) {
+    public ResponseEntity<String> logout(@RequestBody Map<String, String> body, Principal principal) {
+        String token = body.get("token");
+        if (!ownsActiveToken(token, principal)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\":\"invalid or expired session token\"}");
         try {
             logger.info("Garmin logout");
             ResponseEntity<String> resp = rest.postForEntity(
@@ -82,6 +96,7 @@ public class GarminController {
                 body,
                 String.class
             );
+            sessions.remove(token);
             return ResponseEntity.status(resp.getStatusCode()).body(resp.getBody());
         } catch (Exception e) {
             logger.warn("Logout failed", e);
@@ -89,18 +104,18 @@ public class GarminController {
         }
     }
 
-    @GetMapping("/activities")
-    public ResponseEntity<String> activities(
-            @RequestParam String token,
-            @RequestParam(defaultValue = "20") int limit,
-            @RequestParam(defaultValue = "0") int offset) {
+    @PostMapping("/activities")
+    public ResponseEntity<String> activities(@RequestBody Map<String, String> body, Principal principal) {
+        String token = body.get("token");
+        if (!ownsActiveToken(token, principal)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\":\"invalid or expired session token\"}");
+        int limit = boundedInt(body.get("limit"), 20, 1, 100);
+        int offset = boundedInt(body.get("offset"), 0, 0, 10_000);
         try {
             logger.info("Fetching Garmin activities: limit={}, offset={}", limit, offset);
             long startTime = System.currentTimeMillis();
             
-            String url = garminServiceUrl + "/activities?token=" + token
-                       + "&limit=" + limit + "&offset=" + offset;
-            ResponseEntity<String> resp = rest.getForEntity(url, String.class);
+            String url = garminServiceUrl + "/activities?limit=" + limit + "&offset=" + offset;
+            ResponseEntity<String> resp = rest.exchange(url, HttpMethod.GET, new HttpEntity<>(garminHeaders(token)), String.class);
             
             long duration = System.currentTimeMillis() - startTime;
             logger.info("Activities fetched in {} ms", duration);
@@ -115,16 +130,17 @@ public class GarminController {
     }
 
     @PostMapping("/analyze/{activityId}")
-    public ResponseEntity<?> analyzeActivity(@PathVariable long activityId, @RequestBody Map<String, String> body) {
+    public ResponseEntity<?> analyzeActivity(@PathVariable long activityId, @RequestBody Map<String, String> body, Principal principal) {
         String token = body.get("token");
-        if (token == null || token.isBlank()) return ResponseEntity.badRequest().body(Map.of("error", "token required"));
+        if (!ownsActiveToken(token, principal)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "invalid or expired session token"));
         
         try {
             logger.info("Analyzing Garmin activity: {}", activityId);
             long startTime = System.currentTimeMillis();
             
-            ResponseEntity<byte[]> response = rest.getForEntity(
-                    garminServiceUrl + "/activity/" + activityId + "/gpx?token=" + token, byte[].class);
+            ResponseEntity<byte[]> response = rest.exchange(
+                    garminServiceUrl + "/activity/" + activityId + "/gpx", HttpMethod.GET,
+                    new HttpEntity<>(garminHeaders(token)), byte[].class);
             
             if (response.getStatusCode().value() == 401 || response.getStatusCode().value() == 403) {
                 logger.warn("Token expired or invalid for activity {}", activityId);
@@ -175,16 +191,14 @@ public class GarminController {
             @RequestBody Map<String, String> body,
             Principal principal) {
         String token = body.get("token");
-        if (token == null || token.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "token required"));
-        }
+        if (!ownsActiveToken(token, principal)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "invalid or expired session token"));
         
         try {
             logger.info("Caching Garmin activities");
             long startTime = System.currentTimeMillis();
             
-            String url = garminServiceUrl + "/activities?token=" + token + "&limit=100&offset=0";
-            ResponseEntity<String> resp = rest.getForEntity(url, String.class);
+            String url = garminServiceUrl + "/activities?limit=100&offset=0";
+            ResponseEntity<String> resp = rest.exchange(url, HttpMethod.GET, new HttpEntity<>(garminHeaders(token)), String.class);
             
             if (!resp.getStatusCode().is2xxSuccessful()) {
                 return ResponseEntity.status(resp.getStatusCode()).body(resp.getBody());
@@ -257,9 +271,7 @@ public class GarminController {
         String difficultyMin = (String) body.get("difficultyMin");
         String difficultyMax = (String) body.get("difficultyMax");
 
-        if (token == null || token.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "token required"));
-        }
+        if (!ownsActiveToken(token, principal)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "invalid or expired session token"));
         if (type == null || type.isBlank()) {
             type = "TOUR";
         }
@@ -273,8 +285,8 @@ public class GarminController {
             logger.debug("Downloading GPX for activity {}", activityId);
             long start = System.currentTimeMillis();
             
-            String url = garminServiceUrl + "/activity/" + activityId + "/gpx?token=" + token;
-            ResponseEntity<byte[]> gpxResp = rest.getForEntity(url, byte[].class);
+            String url = garminServiceUrl + "/activity/" + activityId + "/gpx";
+            ResponseEntity<byte[]> gpxResp = rest.exchange(url, HttpMethod.GET, new HttpEntity<>(garminHeaders(token)), byte[].class);
             
             long duration = System.currentTimeMillis() - start;
             logger.debug("GPX downloaded in {} ms ({} bytes)", duration, gpxResp.getBody() != null ? gpxResp.getBody().length : 0);
@@ -425,6 +437,27 @@ public class GarminController {
         String result = value.trim().toUpperCase();
         if (!result.matches("S[0-5]")) throw new IllegalArgumentException("Difficulty must be S0 through S5.");
         return result;
+    }
+
+    private boolean ownsActiveToken(String token, Principal principal) {
+        if (token == null || principal == null) return false;
+        GarminSession session = sessions.get(token);
+        if (session == null || Instant.now().isAfter(session.expiresAt())) {
+            sessions.remove(token);
+            return false;
+        }
+        return session.username().equals(principal.getName());
+    }
+
+    private static HttpHeaders garminHeaders(String token) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Garmin-Session", token);
+        return headers;
+    }
+
+    private static int boundedInt(String value, int defaultValue, int min, int max) {
+        try { return Math.max(min, Math.min(max, Integer.parseInt(value))); }
+        catch (Exception ignored) { return defaultValue; }
     }
 }
 

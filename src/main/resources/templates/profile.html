@@ -1161,7 +1161,11 @@ async function saveGarminCredentials(email, password) {
 }
 
 async function loadActivities() {
-    const r = await fetch(`/api/v1/garmin/activities?token=${garminToken}&limit=${BATCH}&offset=${activitiesOffset}`);
+    const r = await fetch('/api/v1/garmin/activities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: garminToken, limit: BATCH, offset: activitiesOffset })
+    });
     if (!r.ok) { alert('Failed to load activities'); return; }
     const data = await r.json();
     allActivities = allActivities.concat(data);

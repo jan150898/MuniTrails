@@ -4,8 +4,8 @@ Garmin Connect microservice for Muni Trails.
 Endpoints:
   POST /login              { email, password }  -> { token }
   POST /logout             { token }
-  GET  /activities?token=&limit=20&offset=0
-  GET  /activity/<id>/gpx?token=
+  GET  /activities?limit=20&offset=0  (X-Garmin-Session header)
+  GET  /activity/<id>/gpx             (X-Garmin-Session header)
   GET  /health
 """
 
@@ -35,6 +35,10 @@ _sessions: dict[str, Garmin] = {}
 
 def _get_client(token: str) -> Garmin | None:
     return _sessions.get(token)
+
+
+def _session_token() -> str:
+    return request.headers.get("X-Garmin-Session", "")
 
 
 def _err(msg: str, status: int = 400):
@@ -108,7 +112,7 @@ def logout():
 
 @app.get("/activities")
 def activities():
-    token = request.args.get("token") or ""
+    token = _session_token()
     limit = int(request.args.get("limit", 20))
     offset = int(request.args.get("offset", 0))
 
@@ -160,7 +164,7 @@ def activities():
 
 @app.get("/activity/<int:activity_id>/gpx")
 def activity_gpx(activity_id: int):
-    token = request.args.get("token") or ""
+    token = _session_token()
     client = _get_client(token)
     if not client:
         return _err("invalid or expired session token", 401)
