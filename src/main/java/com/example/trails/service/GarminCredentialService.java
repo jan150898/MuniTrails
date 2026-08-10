@@ -50,6 +50,11 @@ public class GarminCredentialService {
         GarminCredential gc = credential.get();
         String email = encryptionService.decrypt(gc.getEncryptedEmail());
         String password = encryptionService.decrypt(gc.getEncryptedPassword());
+        if (encryptionService.isLegacyCiphertext(gc.getEncryptedEmail()) || encryptionService.isLegacyCiphertext(gc.getEncryptedPassword())) {
+            gc.setEncryptedEmail(encryptionService.encrypt(email));
+            gc.setEncryptedPassword(encryptionService.encrypt(password));
+            credentialRepository.save(gc);
+        }
 
         return Optional.of(new GarminCredentials(email, password));
     }
