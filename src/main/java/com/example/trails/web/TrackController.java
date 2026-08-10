@@ -48,16 +48,17 @@ public class TrackController {
 
     // Track endpoints
     @GetMapping("/tracks")
-    public ResponseEntity<List<TrackResponse>> listTracks() {
-        return ResponseEntity.ok(trackService.findAllSummaries());
+    public ResponseEntity<List<TrackResponse>> listTracks(Principal principal) {
+        return ResponseEntity.ok(trackService.findVisibleSummaries(getCurrentUser(principal)));
     }
 
     @GetMapping("/tracks/paginated")
     public ResponseEntity<TrackPageResponse> listTracksPaginated(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            Principal principal) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<GPXTrack> tracks = trackService.findAllPaginated(pageable);
+        Page<GPXTrack> tracks = trackService.findAllPaginated(getCurrentUser(principal), pageable);
         
         List<TrackResponse> responses = tracks.stream()
                 .map(TrackResponse::new)
@@ -85,7 +86,8 @@ public class TrackController {
             @RequestParam(required = false) Integer maxRating,
             @RequestParam(required = false) Integer minExposition,
             @RequestParam(required = false) Integer maxExposition,
-            @RequestParam(required = false) Boolean rideAgain) {
+            @RequestParam(required = false) Boolean rideAgain,
+            Principal principal) {
         
         List<GPXTrack> tracks = trackService.filterTracks(
                 minDistance, maxDistance, trackType,
@@ -93,7 +95,7 @@ public class TrackController {
                 minHighestPoint, maxHighestPoint,
                 minRating, maxRating,
                 minExposition, maxExposition,
-                rideAgain
+                rideAgain, getCurrentUser(principal)
         );
         
         List<TrackResponse> responses = tracks.stream()
@@ -106,9 +108,10 @@ public class TrackController {
     public ResponseEntity<List<TrackResponse>> filterTracks(
             @RequestParam(required = false) Double minDistance,
             @RequestParam(required = false) Double maxDistance,
-            @RequestParam(required = false) String trackType) {
+            @RequestParam(required = false) String trackType,
+            Principal principal) {
         List<GPXTrack> tracks = trackService.filterTracks(minDistance, maxDistance, trackType,
-                null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, getCurrentUser(principal));
         List<TrackResponse> responses = tracks.stream()
                 .map(TrackResponse::new)
                 .collect(Collectors.toList());
@@ -116,8 +119,8 @@ public class TrackController {
     }
 
     @GetMapping("/tracks/{trackId}")
-    public ResponseEntity<TrackResponse> getTrack(@PathVariable UUID trackId) {
-        GPXTrack track = trackService.findById(trackId);
+    public ResponseEntity<TrackResponse> getTrack(@PathVariable UUID trackId, Principal principal) {
+        GPXTrack track = trackService.requireReadable(trackId, getCurrentUser(principal));
         return ResponseEntity.ok(new TrackResponse(track));
     }
 
@@ -126,7 +129,7 @@ public class TrackController {
         User user = getCurrentUser(principal);
         GPXTrack track = trackService.findById(trackId);
         
-        if (!track.getCreatedBy().getId().equals(user.getId())) {
+        if (!trackService.isOwnerOrAdmin(track, user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         
@@ -195,14 +198,15 @@ public class TrackController {
     }
 
     @DeleteMapping("/tracks/{trackId}")
-    public ResponseEntity<Void> deleteTrack(@PathVariable UUID trackId) {
-        trackService.deleteTrack(trackId);
+    public ResponseEntity<Void> deleteTrack(@PathVariable UUID trackId, Principal principal) {
+        trackService.deleteTrack(trackId, getCurrentUser(principal));
         return ResponseEntity.noContent().build();
     }
 
     // Comment endpoints
     @GetMapping("/tracks/{trackId}/comments")
-    public ResponseEntity<List<CommentResponse>> listComments(@PathVariable UUID trackId) {
+    public ResponseEntity<List<CommentResponse>> listComments(@PathVariable UUID trackId, Principal principal) {
+        trackService.requireReadable(trackId, getCurrentUser(principal));
         List<Comment> comments = commentService.findByTrackId(trackId);
         List<CommentResponse> responses = comments.stream()
                 .map(CommentResponse::new)
@@ -216,7 +220,7 @@ public class TrackController {
             @Valid @RequestBody CreateCommentRequest req,
             Principal principal) {
         User user = getCurrentUser(principal);
-        GPXTrack track = trackService.findById(trackId);
+        GPXTrack track = trackService.requireReadable(trackId, user);
         
         Comment comment = commentService.createComment(track, user, req.getText());
         
@@ -244,8 +248,8 @@ public class TrackController {
     }
 
     @GetMapping("/tracks/{trackId}/download-gpx")
-    public ResponseEntity<byte[]> downloadGpx(@PathVariable UUID trackId) {
-        GPXTrack track = trackService.findById(trackId);
+    public ResponseEntity<byte[]> downloadGpx(@PathVariable UUID trackId, Principal principal) {
+        GPXTrack track = trackService.requireReadable(trackId, getCurrentUser(principal));
         byte[] gpxData = track.getGpxFile();
         
         if (gpxData == null || gpxData.length == 0) {

@@ -4,12 +4,16 @@ import com.example.trails.model.GPXTrack;
 import com.example.trails.model.GPXTrackStatus;
 import com.example.trails.model.GPXTrackType;
 import com.example.trails.model.User;
+import com.example.trails.model.Visibility;
 import com.example.trails.dto.TrackResponse;
 import com.example.trails.dto.UpdateTourRequest;
 import com.example.trails.repo.GPXTrackRepository;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.UUID;
 import java.util.Optional;
@@ -32,6 +36,13 @@ public class TrackService {
         return gpxTrackRepository.findAllSummaries();
     }
 
+    public List<TrackResponse> findVisibleSummaries(User user) {
+        return gpxTrackRepository.findAll().stream()
+                .filter(track -> canRead(track, user))
+                .map(TrackResponse::new)
+                .collect(Collectors.toList());
+    }
+
     public List<TrackResponse> findSummariesByCreatorId(UUID userId) {
         return gpxTrackRepository.findSummariesByCreatorId(userId);
     }
@@ -40,8 +51,28 @@ public class TrackService {
         return gpxTrackRepository.findSummaryById(trackId);
     }
 
-    public Page<GPXTrack> findAllPaginated(Pageable pageable) {
-        return gpxTrackRepository.findAll(pageable);
+    public Page<GPXTrack> findAllPaginated(User user, Pageable pageable) {
+        List<GPXTrack> visible = gpxTrackRepository.findAll().stream()
+                .filter(track -> canRead(track, user))
+                .collect(Collectors.toList());
+        int start = Math.min((int) pageable.getOffset(), visible.size());
+        int end = Math.min(start + pageable.getPageSize(), visible.size());
+        return new PageImpl<>(visible.subList(start, end), pageable, visible.size());
+    }
+
+    public boolean canRead(GPXTrack track, User user) {
+        return track.getVisibility() == Visibility.PUBLIC || isOwnerOrAdmin(track, user);
+    }
+
+    public boolean isOwnerOrAdmin(GPXTrack track, User user) {
+        return user != null && ("ROLE_ADMIN".equals(user.getRole()) || "ADMIN".equals(user.getRole())
+                || track.getCreatedBy().getId().equals(user.getId()));
+    }
+
+    public GPXTrack requireReadable(UUID id, User user) {
+        GPXTrack track = findById(id);
+        if (!canRead(track, user)) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized to access this track");
+        return track;
     }
 
     public GPXTrack findById(UUID id) {
@@ -61,11 +92,12 @@ public class TrackService {
             Integer maxRating,
             Integer minExposition,
             Integer maxExposition,
-            Boolean rideAgain) {
+            Boolean rideAgain, User user) {
         
         List<GPXTrack> tracks = gpxTrackRepository.findAll();
         
         return tracks.stream()
+                .filter(t -> canRead(t, user))
                 .filter(t -> minDistance == null || t.getDistanceMeters() >= minDistance)
                 .filter(t -> maxDistance == null || t.getDistanceMeters() <= maxDistance)
                 .filter(t -> trackType == null || t.getType().name().equalsIgnoreCase(trackType))
@@ -106,6 +138,7 @@ public class TrackService {
                                 double distanceMeters, double elevGainMeters, 
                                 double elevLossMeters, User lastEditedBy) {
         GPXTrack track = findById(id);
+        if (!isOwnerOrAdmin(track, lastEditedBy)) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized to edit this track");
         track.setName(name);
         track.setStartLat(startLat);
         track.setStartLon(startLon);
@@ -116,12 +149,15 @@ public class TrackService {
         return gpxTrackRepository.save(track);
     }
 
-    public void deleteTrack(UUID id) {
-        gpxTrackRepository.deleteById(id);
+    public void deleteTrack(UUID id, User user) {
+        GPXTrack track = findById(id);
+        if (!isOwnerOrAdmin(track, user)) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized to delete this track");
+        gpxTrackRepository.delete(track);
     }
 
     public GPXTrack updateTourDetails(UUID trackId, UpdateTourRequest req, User user) {
         GPXTrack track = findById(trackId);
+        if (!isOwnerOrAdmin(track, user)) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized to edit this track");
         
         if (req.getName() != null) track.setName(req.getName());
         if (req.getType() != null) track.setType(GPXTrackType.valueOf(req.getType().toUpperCase()));

@@ -134,7 +134,7 @@ class TrackServiceTest {
     void testDeleteTrack() {
         GPXTrack created = trackService.createTrack("ToDelete", GPXTrackType.TOUR, 47.5, 11.5, 1000, 100, 50, testUser);
 
-        trackService.deleteTrack(created.getId());
+        trackService.deleteTrack(created.getId(), testUser);
 
         assertThrows(RuntimeException.class, () -> {
             trackService.findById(created.getId());
@@ -149,7 +149,7 @@ class TrackServiceTest {
         trackService.createTrack("Track3", GPXTrackType.UPHILL, 47.7, 11.7, 3000, 300, 150, testUser);
 
         Pageable pageable = PageRequest.of(0, 10);
-        Page<GPXTrack> page = trackService.findAllPaginated(pageable);
+        Page<GPXTrack> page = trackService.findAllPaginated(testUser, pageable);
 
         assertTrue(page.getTotalElements() >= 3);
     }
@@ -160,7 +160,7 @@ class TrackServiceTest {
         trackService.createTrack("Short", GPXTrackType.TOUR, 47.5, 11.5, 5000, 100, 50, testUser);
         trackService.createTrack("Long", GPXTrackType.TOUR, 47.6, 11.6, 50000, 500, 400, testUser);
 
-        List<GPXTrack> filtered = trackService.filterTracks(30000.0, 60000.0, null, null, null, null, null, null, null, null, null, null);
+        List<GPXTrack> filtered = trackService.filterTracks(30000.0, 60000.0, null, null, null, null, null, null, null, null, null, null, testUser);
 
         assertEquals(1, filtered.size());
         assertEquals("Long", filtered.get(0).getName());
@@ -172,7 +172,7 @@ class TrackServiceTest {
         trackService.createTrack("Trail1", GPXTrackType.TOUR, 47.5, 11.5, 1000, 100, 50, testUser);
         trackService.createTrack("Tour1", GPXTrackType.TOUR, 47.6, 11.6, 2000, 200, 100, testUser);
 
-        List<GPXTrack> filtered = trackService.filterTracks(null, null, "TOUR", null, null, null, null, null, null, null, null, null);
+        List<GPXTrack> filtered = trackService.filterTracks(null, null, "TOUR", null, null, null, null, null, null, null, null, null, testUser);
 
         assertTrue(filtered.stream().allMatch(t -> t.getType() == GPXTrackType.TOUR));
     }

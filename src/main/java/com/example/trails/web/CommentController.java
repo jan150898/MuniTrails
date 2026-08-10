@@ -6,6 +6,7 @@ import com.example.trails.model.User;
 import com.example.trails.repo.CommentRepository;
 import com.example.trails.repo.GPXTrackRepository;
 import com.example.trails.service.UserService;
+import com.example.trails.service.TrackService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,19 +27,23 @@ public class CommentController {
     private final CommentRepository commentRepository;
     private final GPXTrackRepository trackRepository;
     private final UserService userService;
+    private final TrackService trackService;
 
-    public CommentController(CommentRepository commentRepository, GPXTrackRepository trackRepository, UserService userService) {
+    public CommentController(CommentRepository commentRepository, GPXTrackRepository trackRepository, UserService userService,
+                             TrackService trackService) {
         this.commentRepository = commentRepository;
         this.trackRepository = trackRepository;
         this.userService = userService;
+        this.trackService = trackService;
     }
 
     /**
      * Get all comments for a track
      */
     @GetMapping("/track/{trackId}")
-    public ResponseEntity<?> getComments(@PathVariable UUID trackId) {
+    public ResponseEntity<?> getComments(@PathVariable UUID trackId, Principal principal) {
         try {
+            trackService.requireReadable(trackId, userService.getUserByUsername(principal.getName()));
             List<Comment> comments = commentRepository.findByTrack_IdOrderByCreatedAtDesc(trackId);
             var response = comments.stream().map(c -> Map.of(
                 "id", c.getId().toString(),
@@ -76,6 +81,9 @@ public class CommentController {
             User user = userService.getUserByUsername(principal.getName());
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
+            }
+            if (!trackService.canRead(track, user)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Not authorized to comment on this track"));
             }
 
             Comment comment = new Comment();
