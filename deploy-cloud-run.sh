@@ -53,7 +53,7 @@ else
     echo "Step 2: Updating Cloud Run with database configuration..."
     gcloud run services update $SERVICE_NAME \
         --region=$REGION \
-        --set-env-vars="SPRING_DATASOURCE_URL=jdbc:postgresql://$INSTANCE_IP:5432/trails,SPRING_DATASOURCE_USERNAME=postgres,SPRING_DATASOURCE_PASSWORD=trails,SPRING_FLYWAY_ENABLED=true"
+        --set-env-vars="SPRING_DATASOURCE_URL=jdbc:postgresql://$INSTANCE_IP:5432/trails,SPRING_DATASOURCE_USERNAME=postgres,SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:?Set DB_PASSWORD},APP_ENCRYPTION_KEY=${APP_ENCRYPTION_KEY:?Set APP_ENCRYPTION_KEY},SPRING_FLYWAY_ENABLED=true"
     
     echo "✓ Environment variables set"
 fi
