@@ -6,9 +6,10 @@ A basic Spring Boot (Maven) project with:
 - Landing page after login
 - Admin-only page
 
-## Demo accounts
-- **Admin**: `admin` / `admin123`
-- **User**: `user` / `user123`
+## Initial access
+
+No default accounts are created. Provision the first administrator through your
+deployment process using a unique password before exposing the application.
 
 ## Run
 ```bash

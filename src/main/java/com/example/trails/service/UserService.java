@@ -2,6 +2,7 @@ package com.example.trails.service;
 
 import com.example.trails.model.User;
 import com.example.trails.repo.UserRepository;
+import com.example.trails.util.PasswordPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.Optional;
@@ -37,6 +38,9 @@ public class UserService {
         if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
             throw new IllegalArgumentException("Current password is incorrect");
         }
+        
+        // Enforce minimum password complexity
+        PasswordPolicy.validate(newPassword);
         
         // Encode and save new password
         user.setPasswordHash(passwordEncoder.encode(newPassword));

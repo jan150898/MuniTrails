@@ -68,22 +68,5 @@ CREATE TABLE IF NOT EXISTS track_comment (
 CREATE INDEX IF NOT EXISTS idx_track_comment_track ON track_comment(track_id);
 CREATE INDEX IF NOT EXISTS idx_track_comment_user  ON track_comment(user_id);
 
--- Seed initial users (passwords must match your BCrypt encoder output)
--- IMPORTANT: Replace these hashes if your DbUserDetailsService expects different columns/names.
--- To keep migrations deterministic, we insert with empty placeholders only if table is empty.
--- If you want real accounts immediately, set passwords via application/service layer instead.
-INSERT INTO app_user (id, username, password_hash, role)
-SELECT
-  gen_random_uuid(),
-  'admin',
-  '$2b$10$ZBqfIqFdG669xLHi4yE9/uyMgLtfV3WTBVryt5.vNQ01f8Nzwzd5q',
-  'ADMIN'
-WHERE NOT EXISTS (SELECT 1 FROM app_user WHERE username='admin');
-
-INSERT INTO app_user (id, username, password_hash, role)
-SELECT
-  gen_random_uuid(),
-  'user',
-  '$2b$10$hnhb5dcNsm6IQXcvlt0YAOQ2GlIugprRuzg66lxZkwCqiBcrBOsDW',
-  'USER'
-WHERE NOT EXISTS (SELECT 1 FROM app_user WHERE username='user');
+-- Users must be provisioned through an administrator-controlled deployment
+-- process. Never ship predictable application accounts in a database migration.

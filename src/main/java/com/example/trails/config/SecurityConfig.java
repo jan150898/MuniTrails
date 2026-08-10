@@ -1,12 +1,15 @@
 package com.example.trails.config;
 
 import com.example.trails.security.DbUserDetailsService;
+import com.example.trails.security.LockoutAwareAuthenticationProvider;
+import com.example.trails.security.LoginAttemptService;
 
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -30,12 +33,18 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    // Wraps the DB authentication provider with a brute-force lockout check.
+    // This is the only AuthenticationProvider bean registered with Spring
+    // Security so that a locked-out username is rejected before any
+    // password check happens.
     @Bean
-    public DaoAuthenticationProvider daoAuthenticationProvider(DbUserDetailsService uds, PasswordEncoder encoder) {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(uds);
-        provider.setPasswordEncoder(encoder);
-        return provider;
+    public AuthenticationProvider authenticationProvider(DbUserDetailsService uds,
+                                                           PasswordEncoder encoder,
+                                                           LoginAttemptService loginAttemptService) {
+        DaoAuthenticationProvider dao = new DaoAuthenticationProvider();
+        dao.setUserDetailsService(uds);
+        dao.setPasswordEncoder(encoder);
+        return new LockoutAwareAuthenticationProvider(dao, loginAttemptService);
     }
 
     @Bean
@@ -48,11 +57,8 @@ public class SecurityConfig {
         http
                 // CSRF protection enabled. Token is delivered via cookie so JS/fetch calls
                 // can read it and send it back in the X-XSRF-TOKEN header.
-                // Garmin server-to-server proxy endpoints are exempted since they are not
-                // triggered by a browser-submitted form.
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringRequestMatchers("/api/v1/garmin/**")
                 )
                 .headers(headers -> headers
                         .httpStrictTransportSecurity(hsts -> hsts
@@ -66,13 +72,14 @@ public class SecurityConfig {
                         )
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/css/**", "/js/**", "/images/**", "/").permitAll()
+                        .requestMatchers("/login", "/css/**", "/js/**", "/images/**", "/", "/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
                         .defaultSuccessUrl("/landing", true)
+                        .failureUrl("/login?error")
                         .permitAll()
                 )
                 .logout(logout -> logout
