@@ -51,12 +51,12 @@ public class ProfileController {
     public String changePassword(Principal principal, ChangePasswordRequest request, RedirectAttributes redirectAttributes) {
         if (request.getNewPassword() == null || request.getNewPassword().isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "New password cannot be empty");
-            return "redirect:/change-password";
+            return "redirect:/profile";
         }
         
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
             redirectAttributes.addFlashAttribute("error", "Passwords do not match");
-            return "redirect:/change-password";
+            return "redirect:/profile";
         }
         
         try {
@@ -65,7 +65,7 @@ public class ProfileController {
             return "redirect:/profile";
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/change-password";
+            return "redirect:/profile";
         }
     }
 }
