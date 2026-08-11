@@ -1,19 +1,4 @@
 services:
-  db:
-    image: postgres:16
-    container_name: trails-postgres
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
-    volumes:
-      - trails-postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U trails"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   garmin-service:
     build:
       context: ./garmin-service
@@ -34,14 +19,12 @@ services:
       dockerfile: Dockerfile
     container_name: trails-app
     depends_on:
-      db:
-        condition: service_healthy
       garmin-service:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:?Set POSTGRES_DB}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:?Set POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      DB_URL: ${DB_URL:?Set DB_URL}
+      DB_USERNAME: ${DB_USERNAME:?Set DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
       GARMIN_SERVICE_URL: http://garmin-service:5000
       SECURITY_REQUIRE_HTTPS: "false"
       COOKIE_SECURE: "false"
@@ -49,6 +32,3 @@ services:
     ports:
       - "${APP_PORT:-8080}:8080"
     restart: unless-stopped
-
-volumes:
-  trails-postgres-data:

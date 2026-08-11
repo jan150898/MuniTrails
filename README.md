@@ -21,7 +21,8 @@ Then open:
 ## Docker and Cloud Run
 
 For local development, copy `.env.example` to `.env` and run `docker compose up --build`.
-The Compose file starts PostgreSQL and the Garmin service beside the application.
+The Compose file starts the Garmin service beside the application and connects
+the app to the Supabase database configured in `.env`.
 
 Cloud Run does not run `docker-compose.yml`; deploy the application and Garmin
 service as separate services, and use a managed PostgreSQL instance. Configure
