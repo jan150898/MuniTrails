@@ -36,6 +36,42 @@ button, input, select, textarea { font: inherit; }
 .theme-toggle:hover { background: rgba(255, 255, 255, .27); }
 .theme-toggle:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 
+/* Shared navbar (navbar.html fragment) */
+.navbar-custom {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.navbar-brand-text {
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: white;
+    letter-spacing: 1px;
+    text-decoration: none;
+}
+.navbar-brand-text:hover { color: white; }
+.nav-link {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: 500;
+    transition: color 0.3s;
+    margin-left: 15px;
+}
+.nav-link:hover { color: white !important; }
+.nav-link.active {
+    color: white !important;
+    border-bottom: 2px solid white;
+    padding-bottom: 3px;
+}
+.nav-link-logout {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    font-size: 1rem;
+}
+
 @media (min-width: 992px) {
     .navbar .container-fluid { padding-left: clamp(1.5rem, 4vw, 4rem); padding-right: clamp(1.5rem, 4vw, 4rem); }
     .navbar-nav { align-items: center; }

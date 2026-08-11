@@ -20,51 +20,7 @@
             overflow-x: hidden;
         }
 
-        /* Navigation */
-        .navbar-custom {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .navbar-brand-text {
-            font-weight: 800;
-            font-size: 1.5rem;
-            color: white;
-            letter-spacing: 1px;
-            text-decoration: none;
-        }
-
-        .navbar-brand-text:hover {
-            color: white;
-        }
-
-        .nav-link {
-            color: rgba(255,255,255,0.9) !important;
-            font-weight: 500;
-            transition: color 0.3s;
-            margin-left: 15px;
-        }
-
-        .nav-link:hover {
-            color: white !important;
-        }
-
-        .nav-link.active {
-            color: white !important;
-            border-bottom: 2px solid white;
-            padding-bottom: 3px;
-        }
-
-        .nav-link-logout {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0;
-            font-size: 1rem;
-        }
+        /* Navigation styles live in the shared navbar fragment (navbar.html / app.css) */
 
         /* Hero Section */
         .hero-section {
@@ -487,37 +443,8 @@
     <script src="/js/csrf.js"></script>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
-        <div class="container-fluid">
-            <a class="navbar-brand-text" href="/landing">🏔️ Muni Trails</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch to dark mode" aria-pressed="false"><span data-theme-icon>☾</span><span data-theme-label>Dark</span></button></li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="nav-home" href="/landing">🏠 Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="nav-explore" href="/tours">🔍 Explore Tours</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="nav-upload" href="/profile">📤 Upload Tour</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="nav-profile" href="/profile">👤 My Profile</a>
-                    </li>
-                    <li class="nav-item">
-                        <form method="POST" action="/logout" style="display:inline;">
-                            <button type="submit" class="nav-link nav-link-logout">🚪 Logout</button>
-                        </form>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <!-- Navigation (shared navbar fragment) -->
+    <div th:replace="~{navbar :: navbar}"></div>
 
     <!-- Hero Section -->
     <section class="hero-section">
@@ -731,11 +658,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            const currentPath = window.location.pathname;
-            if (currentPath.includes('/landing') || currentPath === '/') {
-                document.getElementById('nav-home')?.classList.add('active');
-            }
-            
             const gpxFileInput = document.getElementById('gpxFileInput');
             if (gpxFileInput) {
                 gpxFileInput.addEventListener('change', function() {
