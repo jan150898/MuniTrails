@@ -1,0 +1,69 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Maven
+target/
+*.jar
+*.war
+*.ear
+.m2/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Docker/Compose
+.dockerignore
+Dockerfile
+docker-compose*.yml
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.circleci/
+Jenkinsfile
+
+# Documentation & Config
+README.md
+QUICK_START.md
+HOW_TO_DEPLOY.md
+.env
+.env.example
+SECURITY.md
+LICENSE
+
+# Dependencies caches
+node_modules/
+.npm/
+.gradle/
+
+# Deployment configs
+fly.toml
+cloudbuild.yaml
+deploy*.sh
+deploy*.bat
+
+# Test files
+src/test/
+*.test.js
+
+# Build artifacts
+build/
+dist/
+out/

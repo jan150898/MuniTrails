@@ -14,6 +14,7 @@ import os
 import secrets
 import tempfile
 from pathlib import Path
+from time import time
 
 from flask import Flask, jsonify, request
 from garminconnect import (
@@ -27,6 +28,31 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 app = Flask(__name__)
+
+# Rate limiting: simple in-memory store
+_request_times = {}
+RATE_LIMIT = 10  # requests per window
+RATE_WINDOW = 60  # seconds
+
+def _rate_limit(client_id):
+    """Simple rate limiter by client IP."""
+    now = time()
+    if client_id not in _request_times:
+        _request_times[client_id] = []
+    
+    # Keep only recent requests
+    _request_times[client_id] = [t for t in _request_times[client_id] if now - t < RATE_WINDOW]
+    
+    if len(_request_times[client_id]) >= RATE_LIMIT:
+        return False
+    
+    _request_times[client_id].append(now)
+    return True
+
+# This service handles Garmin credentials and must never be callable directly
+# by browsers or other tenants. The Spring application supplies this token on
+# every request; health remains unauthenticated for container probes only.
+SERVICE_AUTH_TOKEN = os.getenv("SERVICE_AUTH_TOKEN", "")
 
 # In-memory session store: token -> Garmin client
 # Good enough for a single-instance service
@@ -43,6 +69,26 @@ def _session_token() -> str:
 
 def _err(msg: str, status: int = 400):
     return jsonify({"error": msg}), status
+
+
+@app.before_request
+def require_internal_auth():
+    if request.path == "/health":
+        return None
+    
+    # Rate limit by client IP
+    client_ip = request.remote_addr
+    if not _rate_limit(client_ip):
+        return _err("Rate limit exceeded", 429)
+    
+    # Limit request body size (10 KB)
+    if request.content_length and request.content_length > 10 * 1024:
+        return _err("Request too large", 413)
+    
+    if not SERVICE_AUTH_TOKEN or not secrets.compare_digest(
+            request.headers.get("X-Internal-Service-Token", ""), SERVICE_AUTH_TOKEN):
+        return _err("service authentication required", 401)
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -63,6 +109,12 @@ def login():
     body = request.get_json(force=True, silent=True) or {}
     email = (body.get("email") or "").strip()
     password = body.get("password") or ""
+
+    # Input validation: prevent abuse
+    if len(email) > 320:  # RFC 5321
+        return _err("Email too long", 400)
+    if len(password) > 1000:  # Reasonable password length
+        return _err("Password too long", 400)
 
     if not email or not password:
         return _err("email and password required")
@@ -115,6 +167,12 @@ def activities():
     token = _session_token()
     limit = int(request.args.get("limit", 20))
     offset = int(request.args.get("offset", 0))
+
+    # Validate query parameters
+    if limit < 1 or limit > 100:
+        limit = 20
+    if offset < 0:
+        offset = 0
 
     client = _get_client(token)
     if not client:
