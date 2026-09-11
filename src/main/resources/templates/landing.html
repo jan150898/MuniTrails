@@ -24,7 +24,7 @@
 
         /* Hero Section */
         .hero-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
             color: white;
             padding: 80px 20px;
             text-align: center;
@@ -82,13 +82,13 @@
 
         .btn-hero-primary {
             background-color: white;
-            color: #667eea;
+            color: var(--brand-primary);
         }
 
         .btn-hero-primary:hover {
             transform: translateY(-3px);
             box-shadow: 0 15px 30px rgba(0,0,0,0.3);
-            color: #667eea;
+            color: var(--brand-primary);
         }
 
         .btn-hero-secondary {
@@ -118,7 +118,7 @@
         .stat-number {
             font-size: 2.5rem;
             font-weight: 800;
-            color: #667eea;
+            color: var(--brand-primary);
         }
 
         .stat-label {
@@ -146,7 +146,7 @@
             content: '';
             width: 100px;
             height: 5px;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(90deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
             position: absolute;
             bottom: -20px;
             left: 50%;
@@ -177,7 +177,7 @@
         }
 
         .tour-card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
             color: white;
             padding: 30px;
             height: 120px;
@@ -216,7 +216,7 @@
         .tour-metric-icon {
             font-size: 1.5rem;
             margin-right: 15px;
-            color: #667eea;
+            color: var(--brand-primary);
             min-width: 30px;
         }
 
@@ -245,7 +245,7 @@
         }
 
         .upload-box {
-            border: 3px dashed #667eea;
+            border: 3px dashed var(--brand-primary);
             border-radius: 12px;
             padding: 60px 20px;
             background: rgba(102, 126, 234, 0.05);
@@ -255,13 +255,13 @@
         }
 
         .upload-box:hover {
-            border-color: #764ba2;
+            border-color: var(--brand-secondary);
             background: rgba(102, 126, 234, 0.1);
         }
 
         .upload-icon {
             font-size: 3rem;
-            color: #667eea;
+            color: var(--brand-primary);
             margin-bottom: 20px;
         }
 
@@ -278,7 +278,7 @@
         }
 
         .btn-upload {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
             color: white;
             padding: 12px 30px;
             border: none;
@@ -306,7 +306,7 @@
         }
 
         .modal-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
             color: white;
             border: none;
             border-radius: 12px 12px 0 0;
@@ -339,13 +339,13 @@
         }
 
         .form-control:focus, .form-select:focus {
-            border-color: #667eea;
+            border-color: var(--brand-primary);
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         /* Footer */
         .footer {
-            background: #2c3e50;
+            background: var(--app-slate);
             color: white;
             padding: 40px 20px;
             text-align: center;
@@ -485,7 +485,7 @@
     <!-- Featured Tours -->
     <section class="featured-section">
         <div class="container">
-            <h2 class="section-title" style="margin-bottom: 80px;">Featured Tours</h2>
+            <h2 class="section-title mb-80">Featured Tours</h2>
             <div class="tour-grid">
                 <div th:each="tour : ${featuredTours}" class="tour-card" onclick="viewTour(this)">
                     <div class="badge-featured">⭐ Featured</div>
@@ -525,8 +525,8 @@
                     </div>
                 </div>
             </div>
-            <div style="text-align: center;">
-                <a href="/tours" class="btn-hero btn-hero-primary" style="display: inline-block;">View All Tours →</a>
+            <div class="text-center">
+                <a href="/tours" class="btn-hero btn-hero-primary d-inline-block">View All Tours →</a>
             </div>
         </div>
     </section>
@@ -534,8 +534,8 @@
     <!-- Upload Section -->
     <section class="upload-section">
         <div class="container">
-            <h2 class="section-title" style="margin-bottom: 20px;">Share Your Tours</h2>
-            <p style="font-size: 1.1rem; color: #666; margin-bottom: 60px;">Upload your GPX files or connect your Garmin device to share your favorite routes</p>
+            <h2 class="section-title mb-20">Share Your Tours</h2>
+            <p class="text-lead mb-60">Upload your GPX files or connect your Garmin device to share your favorite routes</p>
             
             <div class="upload-box">
                 <div class="upload-icon">📤</div>
@@ -596,7 +596,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;" onclick="submitGpxUpload()">Upload Tour</button>
+                    <button type="button" class="btn btn-gradient" onclick="submitGpxUpload()">Upload Tour</button>
                 </div>
             </div>
         </div>

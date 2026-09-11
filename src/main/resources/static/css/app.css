@@ -8,6 +8,13 @@
     --app-text-muted: #64748b;
     --app-border: #dce3ed;
     --app-shadow: 0 10px 30px rgba(15, 23, 42, .10);
+
+    /* Brand palette — single source of truth for the gradient/accent color */
+    --brand-primary: #667eea;
+    --brand-secondary: #764ba2;
+    --brand-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --brand-on: #ffffff;
+    --app-slate: #4b5563;
 }
 
 html { min-width: 320px; }
@@ -137,3 +144,80 @@ button, input, select, textarea { font: inherit; }
 [data-theme="dark"] .form-control::placeholder { color: #91a0b5; }
 [data-theme="dark"] .table { --bs-table-bg: var(--app-surface); --bs-table-color: var(--app-text); --bs-table-border-color: var(--app-border); }
 [data-theme="dark"] .modal-footer, [data-theme="dark"] .modal-body { border-color: var(--app-border); }
+
+/* ===========================================================================
+   Reusable brand components & helpers
+   All colors come from the variables above so the HTML never hardcodes values.
+   =========================================================================== */
+
+/* Primary action button (brand gradient) */
+.btn-gradient {
+    background: var(--brand-gradient);
+    border: none;
+    color: var(--brand-on);
+}
+.btn-gradient:hover,
+.btn-gradient:focus {
+    color: var(--brand-on);
+    filter: brightness(1.06);
+}
+.btn.btn-gray {
+    background: var(--app-slate);
+    border: none;
+    color: #fff;
+}
+
+/* Close "X" on dark/gradient modal headers */
+.btn-close-light { filter: invert(1); }
+
+/* Fixed-position theme toggle (login / admin pages) */
+.theme-toggle-fixed {
+    position: fixed;
+    right: 1rem;
+    top: 1rem;
+    z-index: 2;
+}
+.theme-toggle-solid { background: var(--brand-primary); }
+
+/* Subtle info panels */
+.description-box {
+    background: var(--app-surface-muted);
+    border-left: 4px solid var(--brand-primary);
+    border-radius: 8px;
+    line-height: 1.6;
+    padding: 15px;
+}
+.comment-box {
+    background: var(--app-surface-muted);
+    border-radius: 8px;
+    padding: 15px;
+}
+.scroll-list { max-height: 380px; overflow-y: auto; }
+.chart-container { height: 300px; position: relative; }
+.toolbar { align-items: center; display: flex; justify-content: space-between; }
+.badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.checkbox-label { cursor: pointer; margin: 0; }
+
+/* Text helpers */
+.profile-subtitle { font-size: 1.1rem; margin-bottom: 20px; opacity: .9; }
+.text-lead { color: var(--app-text-muted); font-size: 1.1rem; }
+.text-large { font-size: 1.1rem; }
+
+/* Site footer */
+.footer-site {
+    background: var(--app-slate);
+    color: #fff;
+    margin-top: 60px;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+/* Spacing helpers */
+.mt-10 { margin-top: 10px; }
+.mt-60 { margin-top: 60px; }
+.mb-15 { margin-bottom: 15px; }
+.mb-20 { margin-bottom: 20px; }
+.mb-30 { margin-bottom: 30px; }
+.mb-60 { margin-bottom: 60px; }
+.mb-80 { margin-bottom: 80px; }
+.mr-10 { margin-right: 10px; }

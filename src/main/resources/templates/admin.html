@@ -18,13 +18,13 @@
     <script src="/js/csrf.js"></script>
 </head>
 <body>
-    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch to dark mode" aria-pressed="false" style="position: fixed; right: 1rem; top: 1rem; z-index: 2; background: #667eea;"><span data-theme-icon>☾</span><span data-theme-label>Dark</span></button>
+    <button type="button" class="theme-toggle theme-toggle-fixed theme-toggle-solid" data-theme-toggle aria-label="Switch to dark mode" aria-pressed="false"><span data-theme-icon>☾</span><span data-theme-label>Dark</span></button>
 <div class="wrap">
     <h2>Admin Page</h2>
     <p>You are logged in as an Admin.</p>
 
     <div class="actions">
-        <a class="btn" th:href="@{/landing}" style="background:#4b5563;">Back to Landing</a>
+        <a class="btn btn-gray" th:href="@{/landing}">Back to Landing</a>
         <form th:action="@{/logout}" method="post">
             <button class="btn" type="submit">Logout</button>
         </form>

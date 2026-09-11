@@ -4,8 +4,8 @@
     <title th:text="${tour.name}"></title>
     <style layout:fragment="extra-styles">
         :root { 
-            --primary: #667eea; 
-            --secondary: #764ba2;
+            --primary: var(--brand-primary); 
+            --secondary: var(--brand-secondary);
             --success: #198754;
             --danger: #dc3545;
         }
@@ -88,7 +88,7 @@
             font-size: clamp(1.3rem, 3vw, 1.8rem);
             font-weight: 700;
             margin-bottom: 20px;
-            color: #2c3e50;
+            color: var(--app-slate);
         }
         
         .visualization-grid {
@@ -239,7 +239,7 @@
             font-weight: 600;
             font-size: 0.95rem;
         }
-        .comment-author { color: #667eea; }
+        .comment-author { color: var(--brand-primary); }
         .comment-date { color: #999; font-size: 0.85rem; font-weight: normal; }
         .comment-delete-btn {
             background: none;
@@ -351,7 +351,7 @@
                 <!-- DESCRIPTION SECTION -->
                 <div id="descriptionSection" class="mt-4">
                     <h3>?? Description</h3>
-                    <div id="tourDescription" class="description-text" style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea; line-height: 1.6;">
+                    <div id="tourDescription" class="description-text description-box">
                         <p class="text-muted">No description provided.</p>
                     </div>
                 </div>
@@ -361,9 +361,9 @@
                     <h3>?? Comments</h3>
                     
                     <!-- Comment Input -->
-                    <div class="comment-form mt-3 mb-4" style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                    <div class="comment-form mt-3 mb-4 comment-box">
                         <textarea id="commentInput" class="form-control" placeholder="Share your thoughts about this tour..." rows="3" maxlength="4000"></textarea>
-                        <button id="postCommentBtn" class="btn mt-2" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none;">Post Comment</button>
+                        <button id="postCommentBtn" class="btn mt-2 btn-gradient">Post Comment</button>
                     </div>
 
                     <!-- Comments List -->
