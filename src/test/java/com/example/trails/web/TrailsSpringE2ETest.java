@@ -131,7 +131,7 @@ class TrailsSpringE2ETest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").exists())
                 .andExpect(jsonPath("$.points").isArray())
-                .andExpect(jsonPath("$.points.length()").greaterThan(0))
+                .andExpect(jsonPath("$.points.length()").value(greaterThan(0)))
                 .andExpect(jsonPath("$.sections").isArray());
     }
 
@@ -165,7 +165,7 @@ class TrailsSpringE2ETest {
                 .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sections").isArray())
-                .andExpect(jsonPath("$.sections.length()").greaterThan(0))
+                .andExpect(jsonPath("$.sections.length()").value(greaterThan(0)))
                 .andExpect(jsonPath("$.sections[0].type").value(containsString("UPHILL")));
     }
 
