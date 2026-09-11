@@ -37,13 +37,6 @@ public class SecretsPropertySourceFactory implements PropertySourceFactory {
             secrets.put("spring.datasource.password", dbPassword);
         }
         
-        System.out.println("=== SecretsPropertySourceFactory ===");
-        System.out.println("DB_HOST: " + (dbHost != null ? "SET" : "NULL"));
-        System.out.println("DB_USERNAME: " + (dbUsername != null ? "SET" : "NULL"));
-        System.out.println("DB_PASSWORD: " + (dbPassword != null ? "SET" : "NULL"));
-        System.out.println("Secrets loaded: " + secrets.size() + " properties");
-        System.out.println("=====================================");
-        
         return secrets;
     }
 

@@ -10,6 +10,14 @@ gcloud run deploy munitrails --source=. --region=europe-west1
 
 You don't need to do anything special with the Dockerfile. Just run that command.
 
+## Required secrets
+
+Store database credentials, `APP_ENCRYPTION_KEY`, and a random
+`GARMIN_SERVICE_AUTH_TOKEN` in Cloud Run/Secret Manager. The same Garmin token
+must be configured for the Spring application and the Garmin service. Keep the
+Garmin service internal-only (or require Cloud Run IAM in addition to this
+token); it must not be publicly invokable.
+
 ---
 
 ## THE COMPLETE FLOW (Step by Step)

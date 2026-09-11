@@ -27,12 +27,17 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found: " + username));
     }
 
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new RuntimeException("User not found for email address: " + email));
+    }
+
     public Optional<User> findById(java.util.UUID id) {
         return userRepository.findById(id);
     }
 
-    public void changePassword(String username, String currentPassword, String newPassword) {
-        User user = getUserByUsername(username);
+    public void changePassword(String email, String currentPassword, String newPassword) {
+        User user = getUserByEmail(email);
         
         // Verify current password
         if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {

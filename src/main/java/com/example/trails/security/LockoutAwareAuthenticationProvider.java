@@ -23,8 +23,8 @@ public class LockoutAwareAuthenticationProvider implements AuthenticationProvide
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        String username = authentication.getName();
-        if (loginAttemptService.isLocked(username)) {
+        String email = authentication.getName();
+        if (loginAttemptService.isLocked(email)) {
             throw new LockedException("Too many failed login attempts. Please try again in 15 minutes.");
         }
         return delegate.authenticate(authentication);

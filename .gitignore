@@ -28,6 +28,9 @@ hs_err_pid*
 # Logs
 # ------------------------------
 *.log
+compile_*.txt
+test_out.txt
+out*.txt
 logs/
 **/logs/
 

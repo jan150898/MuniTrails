@@ -39,7 +39,7 @@ public class GarminCredentialController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Email and password are required."));
             }
 
-            User user = userService.getUserByUsername(principal.getName());
+            User user = userService.getUserByEmail(principal.getName());
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "User not found."));
             }
@@ -49,7 +49,7 @@ public class GarminCredentialController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Could not save credentials: " + e.getMessage()));
+                    .body(Map.of("error", "Could not save credentials."));
         }
     }
 
@@ -60,7 +60,7 @@ public class GarminCredentialController {
     @GetMapping("/has-credentials")
     public ResponseEntity<?> hasCredentials(Principal principal) {
         try {
-            User user = userService.getUserByUsername(principal.getName());
+            User user = userService.getUserByEmail(principal.getName());
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
@@ -79,7 +79,7 @@ public class GarminCredentialController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Could not check credentials: " + e.getMessage()));
+                    .body(Map.of("error", "Could not check credentials."));
         }
     }
 
@@ -90,7 +90,7 @@ public class GarminCredentialController {
     @DeleteMapping("/delete")
     public ResponseEntity<?> deleteCredentials(Principal principal) {
         try {
-            User user = userService.getUserByUsername(principal.getName());
+            User user = userService.getUserByEmail(principal.getName());
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
@@ -100,7 +100,7 @@ public class GarminCredentialController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Could not delete credentials: " + e.getMessage()));
+                    .body(Map.of("error", "Could not delete credentials."));
         }
     }
 

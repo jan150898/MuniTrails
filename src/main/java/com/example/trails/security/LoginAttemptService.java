@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Simple in-memory brute-force guard for the login form.
- * Locks out a username for a cooldown period after too many failed
+ * Locks out an email address for a cooldown period after too many failed
  * attempts in a row. This is intentionally lightweight (no extra
  * infrastructure like Redis) - state resets on app restart, which is
  * an acceptable trade-off for a small single-instance deployment.

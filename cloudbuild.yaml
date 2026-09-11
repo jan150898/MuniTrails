@@ -13,13 +13,15 @@ steps:
       - 'push'
       - 'europe-west1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/munitrails:latest'
 
-  # Deploy to Cloud Run
-  - name: 'gcr.io/cloud-builders/gke-deploy'
+  # Deploy the built application image to Cloud Run.
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     args:
       - 'run'
-      - '--filename=.'
+      - 'deploy'
+      - 'munitrails'
       - '--image=europe-west1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/munitrails:latest'
       - '--location=europe-west1'
+      - '--quiet'
 
 images:
   - 'europe-west1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/munitrails:latest'

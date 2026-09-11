@@ -35,7 +35,7 @@ public class SecurityConfig {
 
     // Wraps the DB authentication provider with a brute-force lockout check.
     // This is the only AuthenticationProvider bean registered with Spring
-    // Security so that a locked-out username is rejected before any
+    // Security so that a locked-out email address is rejected before any
     // password check happens.
     @Bean
     public AuthenticationProvider authenticationProvider(DbUserDetailsService uds,

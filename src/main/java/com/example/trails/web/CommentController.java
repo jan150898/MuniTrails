@@ -43,7 +43,7 @@ public class CommentController {
     @GetMapping("/track/{trackId}")
     public ResponseEntity<?> getComments(@PathVariable UUID trackId, Principal principal) {
         try {
-            trackService.requireReadable(trackId, userService.getUserByUsername(principal.getName()));
+            trackService.requireReadable(trackId, userService.getUserByEmail(principal.getName()));
             List<Comment> comments = commentRepository.findByTrack_IdOrderByCreatedAtDesc(trackId);
             var response = comments.stream().map(c -> Map.of(
                 "id", c.getId().toString(),
@@ -78,7 +78,7 @@ public class CommentController {
 
             GPXTrack track = trackRepository.findById(trackId)
                     .orElseThrow(() -> new RuntimeException("Track not found"));
-            User user = userService.getUserByUsername(principal.getName());
+            User user = userService.getUserByEmail(principal.getName());
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
             }
@@ -102,7 +102,7 @@ public class CommentController {
             ));
         } catch (Exception e) {
             logger.error("Error posting comment", e);
-            return ResponseEntity.status(500).body(Map.of("error", "Failed to post comment: " + e.getMessage()));
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to post comment"));
         }
     }
 
@@ -115,7 +115,7 @@ public class CommentController {
             Comment comment = commentRepository.findById(commentId)
                     .orElseThrow(() -> new RuntimeException("Comment not found"));
             
-            User user = userService.getUserByUsername(principal.getName());
+            User user = userService.getUserByEmail(principal.getName());
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Not authenticated"));
             }

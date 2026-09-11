@@ -26,7 +26,7 @@ public class ProfileController {
 
     @GetMapping("/profile")
     public String profile(Principal principal, Model model) {
-        User user = userService.getUserByUsername(principal.getName());
+        User user = userService.getUserByEmail(principal.getName());
         
         List<TrackResponse> tourResponses = trackService.findSummariesByCreatorId(user.getId());
         

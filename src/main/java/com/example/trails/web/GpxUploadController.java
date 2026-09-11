@@ -63,7 +63,7 @@ public class GpxUploadController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Please select a tour type."));
             }
             
-            User user = userService.getUserByUsername(principal.getName());
+            User user = userService.getUserByEmail(principal.getName());
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Please sign in again before uploading."));
             }
@@ -155,7 +155,7 @@ public class GpxUploadController {
             result.put("sections", SectionDetector.detectSections(data.getPoints()));
             return ResponseEntity.ok(result);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Could not read GPX: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("error", "Could not read GPX data."));
         }
     }
 
@@ -385,8 +385,7 @@ public class GpxUploadController {
     }
 
     private static String safeMessage(Exception e) {
-        String message = e.getMessage();
-        return message == null || message.isBlank() ? "invalid GPX data" : message;
+        return "invalid GPX data";
     }
 
     static boolean applyDifficulty(GPXTrack track, String type, String minimum, String maximum) {

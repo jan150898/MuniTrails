@@ -19,6 +19,10 @@ public class User {
     @Column(nullable = false, unique = true, length = 64)
     private String username;
 
+    /** Private sign-in identifier; username remains the public display name. */
+    @Column(length = 320)
+    private String email;
+
     @Column(nullable = false, length = 255)
     private String passwordHash;
 
@@ -54,6 +58,10 @@ public class User {
         return username;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
     public String getPasswordHash() {
         return passwordHash;
     }
@@ -76,6 +84,10 @@ public class User {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public void setEmail(String email) {
+        this.email = email == null ? null : email.trim().toLowerCase(java.util.Locale.ROOT);
     }
 
     public void setPasswordHash(String passwordHash) {

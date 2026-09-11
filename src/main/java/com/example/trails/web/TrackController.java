@@ -43,7 +43,7 @@ public class TrackController {
     }
 
     private User getCurrentUser(Principal principal) {
-        return userService.getUserByUsername(principal.getName());
+        return userService.getUserByEmail(principal.getName());
     }
 
     // Track endpoints

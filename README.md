@@ -11,6 +11,18 @@ A basic Spring Boot (Maven) project with:
 No default accounts are created. Provision the first administrator through your
 deployment process using a unique password before exposing the application.
 
+## User sign-in
+
+Users sign in with their email address. Their username remains their public
+display name on comments and uploads. Before a user can sign in, assign a
+unique email address to the account, for example:
+
+```sql
+UPDATE app_user SET email = 'rider@example.com' WHERE username = 'rider-name';
+```
+
+Email addresses are normalized to lowercase and must be unique.
+
 ## Run
 ```bash
 mvn spring-boot:run
@@ -28,7 +40,9 @@ Cloud Run does not run `docker-compose.yml`; deploy the application and Garmin
 service as separate services, and use a managed PostgreSQL instance. Configure
 the application service with `SPRING_DATASOURCE_URL`,
 `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, and
-`GARMIN_SERVICE_URL`. Cloud Run sets `PORT` automatically.
+`GARMIN_SERVICE_URL`. Configure the same long random
+`GARMIN_SERVICE_AUTH_TOKEN` value in both services; the Garmin service rejects
+all non-health requests without it. Cloud Run sets `PORT` automatically.
 
 ## Endpoints
 - `GET /login` - login page
@@ -36,4 +50,3 @@ the application service with `SPRING_DATASOURCE_URL`,
 - `GET /landing` - landing page (requires auth)
 - `GET /admin` - admin page (requires role ADMIN)
 - `POST /logout` - logout
-
