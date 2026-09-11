@@ -48,6 +48,9 @@ public class GarminController {
     @Value("${garmin.service.url:http://garmin-service:5000}")
     private String garminServiceUrl;
 
+    @Value("${garmin.service.auth-token:}")
+    private String garminServiceAuthToken;
+
     public GarminController(GPXTrackRepository trackRepo, UserService userService, RestTemplate restTemplate,
                           GarminActivityCacheRepository cacheRepo) {
         this.trackRepo = trackRepo;
@@ -64,7 +67,7 @@ public class GarminController {
             
             ResponseEntity<String> resp = rest.postForEntity(
                 garminServiceUrl + "/login",
-                body,
+                new HttpEntity<>(body, garminHeaders(null)),
                 String.class
             );
             
@@ -93,7 +96,7 @@ public class GarminController {
             logger.info("Garmin logout");
             ResponseEntity<String> resp = rest.postForEntity(
                 garminServiceUrl + "/logout",
-                body,
+                new HttpEntity<>(body, garminHeaders(null)),
                 String.class
             );
             sessions.remove(token);
@@ -107,6 +110,8 @@ public class GarminController {
     @PostMapping("/activities")
     public ResponseEntity<String> activities(@RequestBody Map<String, String> body, Principal principal) {
         String token = body.get("token");
+        if (token == null || token.isBlank())
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\":\"invalid or expired session token\"}");
         if (!ownsActiveToken(token, principal)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\":\"invalid or expired session token\"}");
         int limit = boundedInt(body.get("limit"), 20, 1, 100);
         int offset = boundedInt(body.get("offset"), 0, 0, 10_000);
@@ -132,6 +137,8 @@ public class GarminController {
     @PostMapping("/analyze/{activityId}")
     public ResponseEntity<?> analyzeActivity(@PathVariable long activityId, @RequestBody Map<String, String> body, Principal principal) {
         String token = body.get("token");
+        if (token == null || token.isBlank())
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "invalid or expired session token"));
         if (!ownsActiveToken(token, principal)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "invalid or expired session token"));
         
         try {
@@ -182,7 +189,7 @@ public class GarminController {
             return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", "Could not analyze Garmin activity"));
         } catch (Exception e) {
             logger.error("Error analyzing activity " + activityId, e);
-            return ResponseEntity.status(502).body(Map.of("error", "Could not analyze Garmin activity: " + e.getMessage()));
+            return ResponseEntity.status(502).body(Map.of("error", "Could not analyze Garmin activity"));
         }
     }
 
@@ -205,7 +212,7 @@ public class GarminController {
             }
             
             JsonNode activitiesNode = mapper.readTree(resp.getBody());
-            User user = userService.getUserByUsername(principal.getName());
+            User user = userService.getUserByEmail(principal.getName());
             
             GarminActivityCache cache = cacheRepo.findByUser(user)
                     .orElseGet(() -> new GarminActivityCache());
@@ -223,14 +230,14 @@ public class GarminController {
             ));
         } catch (Exception e) {
             logger.error("Error caching activities", e);
-            return ResponseEntity.status(502).body(Map.of("error", "Failed to cache activities: " + e.getMessage()));
+            return ResponseEntity.status(502).body(Map.of("error", "Failed to cache activities"));
         }
     }
 
     @GetMapping("/cached-activities")
     public ResponseEntity<?> getCachedActivities(Principal principal) {
         try {
-            User user = userService.getUserByUsername(principal.getName());
+            User user = userService.getUserByEmail(principal.getName());
             var cache = cacheRepo.findByUser(user);
             
             if (cache.isEmpty() || cache.get().isExpired()) {
@@ -266,6 +273,8 @@ public class GarminController {
             Principal principal) {
 
         String token  = (String) body.get("token");
+        if (token == null || token.isBlank())
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "invalid or expired session token"));
         String type   = (String) body.get("type");
         String name   = (String) body.get("name");
         String difficultyMin = (String) body.get("difficultyMin");
@@ -314,7 +323,7 @@ public class GarminController {
                     .body(Map.of("error", e.getResponseBodyAsString()));
         } catch (Exception e) {
             logger.error("Error downloading GPX", e);
-            return ResponseEntity.status(502).body(Map.of("error", "Garmin service unavailable: " + e.getMessage()));
+            return ResponseEntity.status(502).body(Map.of("error", "Garmin service unavailable"));
         }
 
         // 2. Parse GPX
@@ -327,7 +336,7 @@ public class GarminController {
             logger.debug("GPX parsed in {} ms: {} points", duration, gpxData.getPoints().size());
         } catch (Exception e) {
             logger.error("GPX parse error", e);
-            return ResponseEntity.badRequest().body(Map.of("error", "GPX parse error: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("error", "GPX parse error"));
         }
 
         // 3. Persist track and sections
@@ -335,7 +344,7 @@ public class GarminController {
             logger.debug("Saving track to database");
             long start = System.currentTimeMillis();
             
-            User user = userService.getUserByUsername(principal.getName());
+            User user = userService.getUserByEmail(principal.getName());
             GPXTrack track = new GPXTrack();
             track.setName(name != null && !name.isBlank() ? name : gpxData.getName());
             track.setType(GPXTrackType.valueOf(type.toUpperCase()));
@@ -415,7 +424,7 @@ public class GarminController {
             return ResponseEntity.status(HttpStatus.CREATED).body(new TrackResponse(saved));
         } catch (Exception e) {
             logger.error("Error saving track for activity " + activityId, e);
-            return ResponseEntity.status(500).body(Map.of("error", "Failed to save track: " + e.getMessage()));
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to save track"));
         }
     }
 
@@ -449,9 +458,14 @@ public class GarminController {
         return session.username().equals(principal.getName());
     }
 
-    private static HttpHeaders garminHeaders(String token) {
+    private HttpHeaders garminHeaders(String token) {
         HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Garmin-Session", token);
+        if (token != null && !token.isBlank()) {
+            headers.set("X-Garmin-Session", token);
+        }
+        if (garminServiceAuthToken != null && !garminServiceAuthToken.isBlank()) {
+            headers.set("X-Internal-Service-Token", garminServiceAuthToken);
+        }
         return headers;
     }
 
