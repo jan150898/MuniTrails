@@ -55,6 +55,22 @@ class UserServiceTest {
     }
 
     @Test
+    @DisplayName("Find user by login email")
+    void testGetUserByEmail() {
+        User user = new User();
+        user.setUsername("display-name");
+        user.setEmail("Rider@Example.com");
+        user.setPasswordHash(passwordEncoder.encode("password123"));
+        user.setRole("ROLE_USER");
+        userRepository.save(user);
+
+        User found = userService.getUserByEmail("rider@example.com");
+
+        assertEquals("display-name", found.getUsername());
+        assertEquals("rider@example.com", found.getEmail());
+    }
+
+    @Test
     @DisplayName("Find by username returns empty when not found")
     void testFindByUsernameNotFound() {
         Optional<User> found = userService.findByUsername("nonexistent");

@@ -71,6 +71,7 @@ class GarminConnectE2ETest {
 
         testUser = new User();
         testUser.setUsername("garmin_test_user");
+        testUser.setEmail("garmin@example.test");
         testUser.setPasswordHash(passwordEncoder.encode("password123"));
         testUser.setRole("ROLE_USER");
         testUser = userRepository.save(testUser);
@@ -97,7 +98,7 @@ class GarminConnectE2ETest {
     }
 
     @Test
-    @WithMockUser(username = "garmin_test_user")
+    @WithMockUser(username = "garmin@example.test")
     @DisplayName("E2E: Save Garmin credentials securely")
     void testSaveGarminCredentialsE2E() throws Exception {
         String credentialBody = "{\"email\":\"user@garmin.com\",\"password\":\"garminpass123\"}";
@@ -116,7 +117,7 @@ class GarminConnectE2ETest {
     }
 
     @Test
-    @WithMockUser(username = "garmin_test_user")
+    @WithMockUser(username = "garmin@example.test")
     @DisplayName("E2E: Check if credentials exist (masked email)")
     void testCheckCredentialsExistE2E() throws Exception {
         // First save credentials
@@ -131,7 +132,7 @@ class GarminConnectE2ETest {
     }
 
     @Test
-    @WithMockUser(username = "garmin_test_user")
+    @WithMockUser(username = "garmin@example.test")
     @DisplayName("E2E: Delete Garmin credentials")
     void testDeleteGarminCredentialsE2E() throws Exception {
         // Save credentials first
@@ -149,7 +150,7 @@ class GarminConnectE2ETest {
     }
 
     @Test
-    @WithMockUser(username = "garmin_test_user")
+    @WithMockUser(username = "garmin@example.test")
     @DisplayName("E2E: Garmin login and get token")
     void testGarminLoginE2E() throws Exception {
         String loginBody = "{\"email\":\"user@example.com\",\"password\":\"password123\"}";
@@ -175,7 +176,7 @@ class GarminConnectE2ETest {
     }
 
     @Test
-    @WithMockUser(username = "garmin_test_user")
+    @WithMockUser(username = "garmin@example.test")
     @DisplayName("E2E: List Garmin activities")
     void testListGarminActivitiesE2E() throws Exception {
         String activitiesResponse = "[" +
@@ -206,7 +207,7 @@ class GarminConnectE2ETest {
     }
 
     @Test
-    @WithMockUser(username = "garmin_test_user")
+    @WithMockUser(username = "garmin@example.test")
     @DisplayName("E2E: Analyze Garmin activity (parse GPX)")
     void testAnalyzeGarminActivityE2E() throws Exception {
         long activityId = 123456L;
@@ -236,7 +237,7 @@ class GarminConnectE2ETest {
     }
 
     @Test
-    @WithMockUser(username = "garmin_test_user")
+    @WithMockUser(username = "garmin@example.test")
     @DisplayName("E2E: Full Garmin import workflow")
     void testFullGarminImportWorkflowE2E() throws Exception {
         long activityId = 123456L;
@@ -294,7 +295,7 @@ class GarminConnectE2ETest {
     }
 
     @Test
-    @WithMockUser(username = "garmin_test_user")
+    @WithMockUser(username = "garmin@example.test")
     @DisplayName("E2E: Handle expired Garmin token")
     void testExpiredGarminTokenE2E() throws Exception {
         long activityId = 123456L;
@@ -319,7 +320,7 @@ class GarminConnectE2ETest {
     }
 
     @Test
-    @WithMockUser(username = "garmin_test_user")
+    @WithMockUser(username = "garmin@example.test")
     @DisplayName("E2E: Garmin logout")
     void testGarminLogoutE2E() throws Exception {
         String logoutBody = "{\"token\":\"" + mockGarminToken + "\"}";

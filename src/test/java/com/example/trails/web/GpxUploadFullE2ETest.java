@@ -67,6 +67,7 @@ class GpxUploadFullE2ETest {
         // Create test user
         testUser = new User();
         testUser.setUsername("testuser_e2e");
+        testUser.setEmail("e2e@example.test");
         testUser.setPasswordHash(passwordEncoder.encode("password123"));
         testUser.setRole("ROLE_USER");
         testUser = userRepository.save(testUser);
@@ -108,7 +109,7 @@ class GpxUploadFullE2ETest {
     }
 
     @Test
-    @WithMockUser(username = "testuser_e2e")
+    @WithMockUser(username = "e2e@example.test")
     @DisplayName("Full E2E: Upload GPX, verify on profile page, check data integrity")
     void testGpxUploadAndProfileVerificationE2E() throws Exception {
         // Step 1: Analyze GPX before upload
@@ -199,7 +200,7 @@ class GpxUploadFullE2ETest {
     }
 
     @Test
-    @WithMockUser(username = "testuser_e2e")
+    @WithMockUser(username = "e2e@example.test")
     @DisplayName("Full E2E: Upload mountain GPX with section detection")
     void testMountainGpxUploadWithSectionDetectionE2E() throws Exception {
         // Step 1: Analyze mountain GPX to detect sections
@@ -255,7 +256,7 @@ class GpxUploadFullE2ETest {
     }
 
     @Test
-    @WithMockUser(username = "testuser_e2e")
+    @WithMockUser(username = "e2e@example.test")
     @DisplayName("Full E2E: Edit uploaded tour and verify changes")
     void testEditUploadedTourE2E() throws Exception {
         // Step 1: Upload initial tour
@@ -300,7 +301,7 @@ class GpxUploadFullE2ETest {
     }
 
     @Test
-    @WithMockUser(username = "testuser_e2e")
+    @WithMockUser(username = "e2e@example.test")
     @DisplayName("Full E2E: Verify unauthorized user cannot access other user's tours")
     void testSecurityIsolationE2E() throws Exception {
         // Create track as testuser_e2e
