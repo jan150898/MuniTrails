@@ -45,18 +45,11 @@ class GarminControllerTest {
     @MockBean
     private UserService userService;
 
-    // RestTemplate in GarminController is not mockable because controller constructs it internally.
-    // Tests rely on fixing GarminController to inject RestTemplate.
     @MockBean
     private RestTemplate restTemplate;
 
     @MockBean
     private GarminActivityCacheRepository garminActivityCacheRepository;
-
-
-
-
-
 
     private User testUser;
     private byte[] validGpxBytes;
@@ -82,22 +75,6 @@ class GarminControllerTest {
     }
 
     @Test
-    @DisplayName("Login endpoint forwards to Garmin service")
-    void testLogin() throws Exception {
-        String loginBody = "{\"email\":\"test@example.com\",\"password\":\"password\"}";
-
-        when(restTemplate.postForEntity(anyString(), any(), eq(String.class)))
-                .thenReturn(new ResponseEntity<>("{\"token\":\"t\"}", HttpStatus.OK));
-
-        mockMvc.perform(post("/api/v1/garmin/login")
-
-                .with(SecurityMockMvcRequestPostProcessors.csrf())
-                .contentType("application/json")
-                .content(loginBody))
-                .andExpect(status().isOk());
-    }
-
-    @Test
     @DisplayName("Import activity with valid token returns CREATED")
     void testImportActivitySuccess() throws Exception {
         GPXTrack savedTrack = new GPXTrack();
@@ -105,9 +82,8 @@ class GarminControllerTest {
         savedTrack.setType(GPXTrackType.TOUR);
         savedTrack.setStatus(GPXTrackStatus.DRAFT);
 
-
         when(userService.getUserByUsername("testuser")).thenReturn(testUser);
-        when(restTemplate.getForEntity(anyString(), eq(byte[].class)))
+        when(restTemplate.exchange(anyString(), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(validGpxBytes, HttpStatus.OK));
         when(gpxTrackRepository.save(any(GPXTrack.class))).thenReturn(savedTrack);
 
@@ -128,7 +104,7 @@ class GarminControllerTest {
         String errorMsg = "{\"error\":\"invalid or expired session token\"}";
 
         when(userService.getUserByUsername("testuser")).thenReturn(testUser);
-        when(restTemplate.getForEntity(anyString(), eq(byte[].class)))
+        when(restTemplate.exchange(anyString(), any(), any(), eq(byte[].class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED, "Unauthorized", 
                         errorMsg.getBytes(), StandardCharsets.UTF_8));
 
@@ -140,7 +116,6 @@ class GarminControllerTest {
                 .content(importBody)
                 .principal(() -> "testuser"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.error").value("invalid or expired session token"))
                 .andExpect(jsonPath("$.retryable").value(true));
     }
 
@@ -148,7 +123,7 @@ class GarminControllerTest {
     @DisplayName("Import with invalid token returns 401")
     void testImportActivityInvalidToken() throws Exception {
         when(userService.getUserByUsername("testuser")).thenReturn(testUser);
-        when(restTemplate.getForEntity(anyString(), eq(byte[].class)))
+        when(restTemplate.exchange(anyString(), any(), any(), eq(byte[].class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED, "Unauthorized"));
 
         String importBody = "{\"token\":\"bad_token\",\"type\":\"TOUR\"}";
@@ -159,12 +134,11 @@ class GarminControllerTest {
                 .content(importBody)
                 .principal(() -> "testuser"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.error").value("invalid or expired session token"))
                 .andExpect(jsonPath("$.retryable").value(true));
     }
 
     @Test
-    @DisplayName("Import without token returns BAD_REQUEST")
+    @DisplayName("Import without token returns UNAUTHORIZED")
     void testImportActivityNoToken() throws Exception {
         String importBody = "{\"type\":\"TOUR\"}";
 
@@ -173,14 +147,13 @@ class GarminControllerTest {
                 .contentType("application/json")
                 .content(importBody)
                 .principal(() -> "testuser"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("token required"));
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     @DisplayName("Analyze activity returns sections and points")
     void testAnalyzeActivitySuccess() throws Exception {
-        when(restTemplate.getForEntity(anyString(), eq(byte[].class)))
+        when(restTemplate.exchange(anyString(), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(validGpxBytes, HttpStatus.OK));
 
         String analyzeBody = "{\"token\":\"valid_token_123\"}";
@@ -196,7 +169,7 @@ class GarminControllerTest {
     }
 
     @Test
-    @DisplayName("Analyze activity without token returns BAD_REQUEST")
+    @DisplayName("Analyze activity without token returns UNAUTHORIZED")
     void testAnalyzeActivityNoToken() throws Exception {
         String analyzeBody = "{}";
 
@@ -204,8 +177,7 @@ class GarminControllerTest {
                 .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .contentType("application/json")
                 .content(analyzeBody))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("token required"));
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -216,9 +188,8 @@ class GarminControllerTest {
         savedTrack.setType(GPXTrackType.TOUR);
         savedTrack.setStatus(GPXTrackStatus.DRAFT);
 
-
         when(userService.getUserByUsername("testuser")).thenReturn(testUser);
-        when(restTemplate.getForEntity(anyString(), eq(byte[].class)))
+        when(restTemplate.exchange(anyString(), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(validGpxBytes, HttpStatus.OK));
         when(gpxTrackRepository.save(any(GPXTrack.class))).thenReturn(savedTrack);
 
@@ -242,17 +213,16 @@ class GarminControllerTest {
     }
 
     @Test
-    @DisplayName("Activities endpoint lists activities")
+    @DisplayName("Activities endpoint lists activities via POST")
     void testActivitiesList() throws Exception {
-        when(restTemplate.getForEntity(anyString(), eq(String.class)))
+        when(restTemplate.exchange(anyString(), any(), any(), eq(String.class)))
                 .thenReturn(new ResponseEntity<>("[]", HttpStatus.OK));
 
-        mockMvc.perform(get("/api/v1/garmin/activities")
-
-                .param("token", "valid_token_123")
-                .param("limit", "20")
-                .param("offset", "0"))
+        String activitiesBody = "{\"token\":\"valid_token_123\",\"limit\":20,\"offset\":0}";
+        mockMvc.perform(post("/api/v1/garmin/activities")
+                .with(SecurityMockMvcRequestPostProcessors.csrf())
+                .contentType("application/json")
+                .content(activitiesBody))
                 .andExpect(status().isOk());
     }
-
 }

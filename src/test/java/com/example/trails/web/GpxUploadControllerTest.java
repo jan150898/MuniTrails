@@ -16,12 +16,10 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.nio.charset.StandardCharsets;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(GpxUploadController.class)
-@WithMockUser(username = "testuser", roles = {"USER"})
+@WithMockUser(username = "test@example.test", roles = {"USER"})
 @DisplayName("GpxUploadController Tests")
 class GpxUploadControllerTest {
 
@@ -49,7 +47,11 @@ class GpxUploadControllerTest {
     @BeforeEach
     void setUp() {
         testUser = new User();
-        testUser.setUsername("testuser");
+        testUser.setUsername("test@example.test");
+
+        // Mock userService to return testUser
+        when(userService.getUserByEmail("test@example.test")).thenReturn(testUser);
+        when(userService.getUserByEmail("testuser")).thenReturn(testUser);
 
         validGpxBytes = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "<gpx version=\"1.1\" creator=\"Garmin\">\n" +
@@ -74,11 +76,7 @@ class GpxUploadControllerTest {
         savedTrack.setName("Test Track");
         savedTrack.setType(GPXTrackType.TOUR);
         savedTrack.setStatus(GPXTrackStatus.DRAFT);
-        savedTrack.setVisibility(com.example.trails.model.Visibility.PUBLIC);
 
-
-
-        when(userService.getUserByUsername("testuser")).thenReturn(testUser);
         when(gpxTrackRepository.save(any(GPXTrack.class))).thenReturn(savedTrack);
 
         mockMvc.perform(
@@ -86,9 +84,7 @@ class GpxUploadControllerTest {
                                 .file(file)
                                 .param("name", "Test Track")
                                 .param("type", "TOUR")
-                                .param("description", "Test Description")
                                 .with(SecurityMockMvcRequestPostProcessors.csrf())
-                                .principal(() -> "testuser")
                 )
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Test Track"))
@@ -104,8 +100,6 @@ class GpxUploadControllerTest {
         MockMultipartFile file = new MockMultipartFile(
                 "file", "invalid.gpx", "application/gpx+xml", invalidGpx);
 
-        when(userService.getUserByUsername("testuser")).thenReturn(testUser);
-
         mockMvc.perform(
                         multipart("/api/v1/tracks/upload-gpx")
                                 .file(file)
@@ -117,7 +111,7 @@ class GpxUploadControllerTest {
     }
 
     @Test
-    @DisplayName("Upload GPX without name uses file metadata name")
+    @DisplayName("Upload GPX without name uses file metadata")
     void testUploadGpxWithoutName() throws Exception {
         MockMultipartFile file = new MockMultipartFile(
                 "file", "track.gpx", "application/gpx+xml", validGpxBytes);
@@ -126,12 +120,7 @@ class GpxUploadControllerTest {
         savedTrack.setName("Test Track");
         savedTrack.setType(GPXTrackType.TOUR);
         savedTrack.setStatus(GPXTrackStatus.DRAFT);
-        savedTrack.setVisibility(com.example.trails.model.Visibility.PUBLIC);
 
-
-
-
-        when(userService.getUserByUsername("testuser")).thenReturn(testUser);
         when(gpxTrackRepository.save(any(GPXTrack.class))).thenReturn(savedTrack);
 
         mockMvc.perform(
@@ -139,9 +128,7 @@ class GpxUploadControllerTest {
                                 .file(file)
                                 .param("name", "")
                                 .param("type", "TOUR")
-
                                 .with(SecurityMockMvcRequestPostProcessors.csrf())
-                                .principal(() -> "testuser")
                 )
                 .andExpect(status().isCreated());
     }
