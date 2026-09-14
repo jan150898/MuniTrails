@@ -24,8 +24,8 @@ EXPOSE 8080
 # Production profile: Use real PostgreSQL database
 ENV SPRING_PROFILES_ACTIVE=prod
 
-# Health check
+# Health check using curl (lightweight, pre-installed in Alpine)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD java -cp app.jar org.springframework.boot.loader.JarLauncher &>/dev/null || exit 1
+  CMD curl -f http://localhost:8080/actuator/health || exit 1
 
 ENTRYPOINT ["java","-Xmx512m","-Xms256m","-jar","app.jar"]
