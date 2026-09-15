@@ -71,7 +71,7 @@ services:
       - "${APP_PORT:-8080}:8080"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "java", "-cp", "/app/healthcheck-classes", "com.example.trails.HealthcheckProbe"]
       interval: 30s
       timeout: 10s
       start_period: 40s
