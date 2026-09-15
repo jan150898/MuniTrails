@@ -20,7 +20,7 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
-required_vars=(DB_PASSWORD APP_ENCRYPTION_KEY GARMIN_SERVICE_AUTH_TOKEN)
+required_vars=(DB_PASSWORD APP_ENCRYPTION_KEY GARMIN_SERVICE_AUTH_TOKEN TLS_KEYSTORE_FILE TLS_KEYSTORE_PASSWORD)
 for variable in "${required_vars[@]}"; do
   value="$(grep -E "^${variable}=" .env | tail -n 1 | cut -d= -f2- || true)"
   if [[ -z "$value" || "$value" == replace-with-* ]]; then
@@ -28,6 +28,12 @@ for variable in "${required_vars[@]}"; do
     exit 1
   fi
 done
+
+keystore_file="$(grep -E '^TLS_KEYSTORE_FILE=' .env | tail -n 1 | cut -d= -f2-)"
+if [[ ! -f "$keystore_file" ]]; then
+  echo "TLS_KEYSTORE_FILE does not point to an existing PKCS12 keystore: $keystore_file" >&2
+  exit 1
+fi
 
 if ! [[ "$(grep -E '^APP_ENCRYPTION_KEY=' .env | tail -n 1 | cut -d= -f2-)" =~ ^[0-9a-fA-F]{64}$ ]]; then
   echo "APP_ENCRYPTION_KEY must contain exactly 64 hexadecimal characters." >&2

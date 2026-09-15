@@ -45,8 +45,25 @@ openssl rand -hex 32
 ```
 
 Edit `.env` and set `DB_PASSWORD`, `APP_ENCRYPTION_KEY`, and
-`GARMIN_SERVICE_AUTH_TOKEN` to strong unique values. The encryption key must
-be exactly 64 hexadecimal characters. Keep `.env` private and never commit it.
+`GARMIN_SERVICE_AUTH_TOKEN` to strong unique values. For HTTPS, set
+`TLS_KEYSTORE_FILE`, `TLS_KEYSTORE_PASSWORD`, and `TLS_KEY_ALIAS`. The
+encryption key must be exactly 64 hexadecimal characters. Keep `.env` private
+and never commit it.
+
+Create a PKCS12 keystore from a certificate and private key for your domain:
+
+```bash
+sudo mkdir -p /opt/trails/secrets
+sudo openssl pkcs12 -export \
+  -in fullchain.pem -inkey privkey.pem \
+  -out /opt/trails/secrets/trails.p12 \
+  -name trails
+sudo chown "$USER":"$USER" /opt/trails/secrets/trails.p12
+chmod 600 /opt/trails/secrets/trails.p12
+```
+
+Set `TLS_KEYSTORE_FILE=/opt/trails/secrets/trails.p12` and use the export
+password as `TLS_KEYSTORE_PASSWORD` in `.env`.
 
 ## 4. Start the application
 
@@ -62,7 +79,9 @@ docker compose -f docker-compose.yml -f docker-compose.home.yml --env-file .env 
 docker compose -f docker-compose.yml -f docker-compose.home.yml --env-file .env logs -f app
 ```
 
-From the home network, open `http://SERVER_LAN_IP:8080`.
+From the home network, open `https://SERVER_LAN_IP` or, preferably, the domain
+covered by the certificate. A certificate for a domain will normally produce a
+browser warning when accessed by IP address.
 
 ## 5. Firewall
 
@@ -70,7 +89,7 @@ For LAN-only access, allow the application port only from your local network
 and do not forward ports 5432 or 5000 on the router:
 
 ```bash
-sudo ufw allow from 192.168.1.0/24 to any port 8080 proto tcp
+sudo ufw allow from 192.168.1.0/24 to any port 443 proto tcp
 sudo ufw enable
 ```
 

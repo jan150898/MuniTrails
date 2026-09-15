@@ -3,6 +3,29 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
 
+  app:
+    ports:
+      - "443:8443"
+    volumes:
+      - ${TLS_KEYSTORE_FILE:?Set TLS_KEYSTORE_FILE}:/run/secrets/trails.p12:ro
+    environment:
+      PORT: "8443"
+      TLS_ENABLED: "true"
+      TLS_KEYSTORE: /run/secrets/trails.p12
+      TLS_KEYSTORE_TYPE: PKCS12
+      TLS_KEY_ALIAS: ${TLS_KEY_ALIAS:-trails}
+      TLS_KEYSTORE_PASSWORD: ${TLS_KEYSTORE_PASSWORD:?Set TLS_KEYSTORE_PASSWORD}
+      COOKIE_SECURE: "true"
+      SECURITY_REQUIRE_HTTPS: "true"
+    healthcheck:
+      # Probe the HTTPS port that the override defines; the base healthcheck
+      # still targets the plain-HTTP port 8080 that this profile no longer uses.
+      test: ["CMD", "java", "-cp", "/app/healthcheck-classes", "com.example.trails.HealthcheckProbe", "https://localhost:8443/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+
   # Keep the administrative UI disabled unless it is deliberately enabled.
   pgadmin:
     profiles:
