@@ -1,121 +1,53 @@
-# ⚡ QUICK START: Fix Your Cloud Run Deployment
+# Cloud Run Quick Start
 
-## Your Situation
+Use the production deployment path only after a staging test. It deploys the
+Spring application and Garmin service separately, keeps Garmin private, uses
+Cloud SQL socket connectivity, and reads secrets from Secret Manager.
 
-- Project: `project-d1b0d97e-f7aa-4f2f-b78`
-- Service: `munitrails`
-- Region: `europe-west1`
-- Problem: App crashes at startup (can't connect to database)
+## Prerequisites
 
-## DO THIS NOW
+- `gcloud` authenticated with permission to deploy Cloud Run services.
+- A Cloud SQL PostgreSQL instance and connection name.
+- Two service accounts: one for the app and one for Garmin.
+- The Cloud SQL and Secret Manager APIs enabled.
 
-Choose ONE of these two commands:
+## Configure secrets
 
-### 1. Do not use an in-memory database for deployment
-
-```bash
-gcloud run services update munitrails --region=europe-west1 --set-env-vars="SPRING_FLYWAY_ENABLED=false"
-gcloud run deploy munitrails --source=. --region=europe-west1 --allow-unauthenticated
-gcloud run logs read munitrails --region=europe-west1 --limit=50
-```
-
-The application requires PostgreSQL and Flyway migrations. Disabling Flyway or deploying without a database is not a supported production or staging configuration.
-
----
-
-### 2️⃣ FOR PRODUCTION (With database)
-
-**First**, get your database IP:
-1. Open Google Cloud Console
-2. Go to **SQL** section
-3. Click your instance name
-4. Copy the **Public IP** (looks like `34.567.89.012`)
-
-**Then run:**
+Set these values in your shell. Do not commit them or place them in a command
+that is saved in shell history:
 
 ```bash
-gcloud run services update munitrails \
-    --region=europe-west1 \
-    --set-env-vars="SPRING_DATASOURCE_URL=jdbc:postgresql://YOUR_IP:5432/trails,SPRING_DATASOURCE_USERNAME=postgres,SPRING_DATASOURCE_PASSWORD=YOUR_PASSWORD,SPRING_FLYWAY_ENABLED=true"
-
-gcloud run deploy munitrails \
-    --source=. \
-    --region=europe-west1 \
-    --allow-unauthenticated
-
-gcloud run logs read munitrails --region=europe-west1 --limit=50
+export PROJECT_ID=your-gcp-project
+export DB_PASSWORD='use-a-strong-unique-password'
+export APP_ENCRYPTION_KEY="$(openssl rand -hex 32)"
+export GARMIN_SERVICE_AUTH_TOKEN="$(openssl rand -hex 32)"
+export APP_SERVICE_ACCOUNT=trails-app@${PROJECT_ID}.iam.gserviceaccount.com
+export GARMIN_SERVICE_ACCOUNT=trails-garmin@${PROJECT_ID}.iam.gserviceaccount.com
+./setup-gcp-secrets.sh
 ```
 
-Replace:
-- `YOUR_IP` = your database public IP
-- `YOUR_PASSWORD` = your database password
+## Deploy staging
 
----
-
-## What These Commands Do
-
-1. **`gcloud run services update`** → Sets environment variables (no rebuild)
-2. **`gcloud run deploy`** → Rebuilds and deploys your app
-3. **`gcloud run logs read`** → Shows you the startup logs to verify success
-
----
-
-## How to Check if It Worked
-
-After running the commands, check the logs:
-
-✅ **Good sign:** You'll see `Started Application in X.XXX seconds`
-
-❌ **Bad sign:** You'll see `Connection refused` or `Access denied`
-
----
-
-## Where to Find Database Details
-
-1. Open [Google Cloud Console](https://console.cloud.google.com)
-2. Select project: `project-d1b0d97e-f7aa-4f2f-b78`
-3. Left sidebar → **SQL**
-4. Click your instance name
-5. **Public IP** section shows the IP address
-6. **Users** section shows username (usually `postgres`)
-7. You set the password when creating the instance
-
----
-
-## Detailed Guides
-
-- **Full step-by-step:** See `CLOUD_RUN_DEPLOY.md`
-- **Troubleshooting:** See `CLOUD_RUN_FIX.md`
-
----
-
-## Your Application Config
-
-✓ Already supports environment variables:
-- `SPRING_DATASOURCE_URL`
-- `SPRING_DATASOURCE_USERNAME`
-- `SPRING_DATASOURCE_PASSWORD`
-- `SPRING_FLYWAY_ENABLED`
-
-✓ Dockerfile is correct (multi-stage build)
-
-✓ No code changes needed!
-
----
-
-## Don't Know Your Database Password?
-
-1. **If you created it:** Check your notes/email
-2. **If someone else created it:** Ask them
-3. **To reset it:** Go to Cloud SQL → Users → Reset password
-
----
-
-## Still Stuck?
-
-Post the output of this command in your logs:
 ```bash
-gcloud run logs read munitrails --region=europe-west1 --limit=100
+export REGION=europe-west1
+export DB_INSTANCE_CONNECTION_NAME=project:region:instance
+export DB_NAME=trails
+export DB_USERNAME=trails_user
+./deploy-cloud-run-production.sh
 ```
 
-Look for error messages around `Connection` or `PostgreSQL`.
+The script deploys the private Garmin service first, grants the app service
+account permission to invoke it, then deploys the Spring application.
+
+## Verify
+
+```bash
+gcloud run services list --project="$PROJECT_ID" --region="$REGION"
+gcloud run logs read munitrails --project="$PROJECT_ID" --region="$REGION" --limit=100
+gcloud run logs read munitrails-garmin --project="$PROJECT_ID" --region="$REGION" --limit=100
+```
+
+Do not promote to public traffic until health checks, Flyway startup, login,
+GPX upload, visibility rules, and Garmin import have passed in staging.
+
+For local development, use `docker compose --env-file .env up --build`.

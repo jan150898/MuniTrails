@@ -132,23 +132,13 @@ mvn test jacoco:report
 ## 🚢 Deployment
 
 ### Cloud Run (Google Cloud)
-```bash
-gcloud run deploy munitrails \
-  --source=. \
-  --region=europe-west1 \
-  --set-env-vars=\
-SPRING_DATASOURCE_URL=jdbc:postgresql://...,\
-APP_ENCRYPTION_KEY=...,\
-GARMIN_SERVICE_AUTH_TOKEN=...
-```
 
-### Fly.io
-```bash
-fly deploy
-fly secrets set APP_ENCRYPTION_KEY=...
-```
+Use [QUICK_START.md](QUICK_START.md) and the canonical
+`setup-gcp-secrets.sh` / `deploy-cloud-run-production.sh` scripts. Do not pass
+database passwords or application secrets through `--set-env-vars`.
 
-See [SECURITY_AND_DEPLOYMENT.md](SECURITY_AND_DEPLOYMENT.md) for complete guides.
+See [SECURITY_AND_DEPLOYMENT.md](SECURITY_AND_DEPLOYMENT.md) for the security
+checklist.
 
 ## 📋 Pre-Launch Checklist
 
@@ -194,9 +184,6 @@ See LICENSE file for details.
 
 ---
 
-**Status**: ✅ **PRODUCTION READY**  
-**Last Updated**: 2026-09-11  
-**Version**: 1.0.0  
-**Commits**: 13 strategic commits for publication  
-
-🚀 Ready to launch!
+**Status**: Release candidate; staging and operational gates remain before
+public launch.
+**Last Updated**: 2026-09-15

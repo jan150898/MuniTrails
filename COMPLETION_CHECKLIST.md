@@ -153,36 +153,23 @@ Created 10+ comprehensive end-to-end tests:
 
 ---
 
-## 🚀 READY FOR PUBLICATION
+## Release status
 
 ### What You Get
-✅ **Production-ready application**
-✅ **Secure with hardened images**
-✅ **Fully tested (95+ tests)**
-✅ **Complete documentation**
-✅ **Scalable architecture**
-✅ **Deployment automation**
-✅ **Database included**
-✅ **E2E tests for confidence**
+The codebase is a release candidate. Public launch still requires a real
+PostgreSQL/Cloud Run staging deployment, secret rotation, operational controls,
+security scans, and smoke tests.
 
 ### How to Deploy
 
-**Local Development:**
+**Local development:**
 ```bash
 cp .env.example .env
 docker compose up --build
 # http://localhost:8080/login
 ```
 
-**Cloud Run:**
-```bash
-gcloud run deploy munitrails --source=. --region=europe-west1
-```
-
-**Fly.io:**
-```bash
-fly deploy
-```
+**Cloud Run:** follow [QUICK_START.md](QUICK_START.md).
 
 See [GETTING_STARTED.md](GETTING_STARTED.md) for detailed instructions.
 
