@@ -37,6 +37,7 @@ public class GpxUploadController {
     private static final int MAX_TRACK_NAME_LENGTH = 200;
     private static final int MAX_DESCRIPTION_LENGTH = 4000;
     private static final int MAX_SECTIONS_JSON_LENGTH = 100_000;
+    private static final int MAX_SECTION_NAME_LENGTH = 200;
 
     private final GPXTrackRepository gpxTrackRepository;
     private final UserService userService;
@@ -102,6 +103,7 @@ public class GpxUploadController {
 
             // Parse sections first so we can derive tour-level evaluation values
             List<UploadSectionRequest> parsedSections = readSections(sectionsJson);
+            validateSections(parsedSections, gpxData.getPoints().size());
 
             List<UploadSectionRequest> includedSections = parsedSections.stream()
                     .filter(UploadSectionRequest::isIncluded)
@@ -183,6 +185,30 @@ public class GpxUploadController {
     private List<UploadSectionRequest> readSections(String sectionsJson) throws IOException {
         return sectionsJson == null || sectionsJson.trim().isEmpty() ? List.of()
                 : objectMapper.readValue(sectionsJson, new TypeReference<List<UploadSectionRequest>>() {});
+    }
+
+    private static void validateSections(List<UploadSectionRequest> sections, int pointCount) {
+        for (UploadSectionRequest section : sections) {
+            if (section == null) {
+                throw new IllegalArgumentException("Section data contains an invalid entry.");
+            }
+            if (section.getStartIndex() < 0 || section.getEndIndex() < section.getStartIndex()
+                    || section.getEndIndex() >= pointCount) {
+                throw new IllegalArgumentException("Section boundaries are invalid.");
+            }
+            if (section.getName() != null && section.getName().length() > MAX_SECTION_NAME_LENGTH) {
+                throw new IllegalArgumentException("Section name is too long.");
+            }
+            validateRating(section.getOverallRating(), "overall rating");
+            validateRating(section.getExposition(), "exposition");
+            validateRating(section.getUphillRating(), "uphill rating");
+        }
+    }
+
+    private static void validateRating(int value, String label) {
+        if (value < 0 || value > 10) {
+            throw new IllegalArgumentException("Section " + label + " must be between 0 and 10.");
+        }
     }
 
     private static List<UploadSectionRequest> normalizeUphillDownhillSections(List<UploadSectionRequest> includedSections, int tourLastIndex) {
@@ -376,7 +402,14 @@ public class GpxUploadController {
                     elevation = Double.parseDouble(child.getTextContent());
                 }
             }
-            trackPoints.add(new TrackPoint(Double.parseDouble(lat), Double.parseDouble(lon), elevation));
+            double latitude = Double.parseDouble(lat);
+            double longitude = Double.parseDouble(lon);
+            if (!Double.isFinite(latitude) || latitude < -90 || latitude > 90
+                    || !Double.isFinite(longitude) || longitude < -180 || longitude > 180
+                    || !Double.isFinite(elevation)) {
+                throw new IOException("GPX contains an invalid coordinate or elevation.");
+            }
+            trackPoints.add(new TrackPoint(latitude, longitude, elevation));
         }
         if (!trackPoints.isEmpty()) {
             data.getPoints().addAll(trackPoints);
