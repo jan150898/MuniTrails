@@ -18,7 +18,7 @@ WORKDIR /app
 
 # Copy compiled JAR from build stage
 COPY --from=build /app/target/*.jar app.jar
-COPY --from=build /app/target/classes/com/example/trails/HealthcheckProbe.class /app/healthcheck-classes/com/example/trails/HealthcheckProbe.class
+COPY --from=build /app/target/classes/com/example/trails/HealthcheckProbe*.class /app/healthcheck-classes/com/example/trails/
 
 EXPOSE 8080
 
