@@ -80,8 +80,8 @@ public class GarminController {
             }
             return ResponseEntity.status(resp.getStatusCode()).body(resp.getBody());
         } catch (HttpClientErrorException e) {
-            logger.warn("Garmin login failed: {} {}", e.getStatusCode(), e.getResponseBodyAsString());
-            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+            logger.warn("Garmin login failed: {}", e.getStatusCode());
+            return ResponseEntity.status(e.getStatusCode()).body(garminError(e.getStatusCode()));
         } catch (Exception e) {
             logger.error("Garmin service unavailable", e);
             return ResponseEntity.status(502).body("{\"error\":\"Garmin service unavailable\"}");
@@ -148,7 +148,7 @@ public class GarminController {
             return ResponseEntity.status(resp.getStatusCode()).body(resp.getBody());
         } catch (HttpClientErrorException e) {
             logger.warn("Failed to fetch activities: {}", e.getStatusCode());
-            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+            return ResponseEntity.status(e.getStatusCode()).body(garminError(e.getStatusCode()));
         } catch (Exception e) {
             logger.error("Garmin service unavailable", e);
             return ResponseEntity.status(502).body("{\"error\":\"Garmin service unavailable\"}");
@@ -235,7 +235,7 @@ public class GarminController {
             ResponseEntity<String> resp = rest.exchange(url, HttpMethod.GET, new HttpEntity<>(garminHeaders(token)), String.class);
             
             if (!resp.getStatusCode().is2xxSuccessful()) {
-                return ResponseEntity.status(resp.getStatusCode()).body(resp.getBody());
+                return ResponseEntity.status(resp.getStatusCode()).body(garminError(resp.getStatusCode()));
             }
             
             JsonNode activitiesNode = mapper.readTree(resp.getBody());
@@ -491,6 +491,16 @@ public class GarminController {
             return false;
         }
         return session.username().equals(principal.getName());
+    }
+
+    private String garminError(HttpStatusCode status) {
+        if (status.value() == HttpStatus.UNAUTHORIZED.value()) {
+            return "{\"error\":\"Garmin authentication expired\"}";
+        }
+        if (status.value() == HttpStatus.TOO_MANY_REQUESTS.value()) {
+            return "{\"error\":\"Garmin rate limit reached\"}";
+        }
+        return "{\"error\":\"Garmin service unavailable\"}";
     }
 
     private HttpHeaders garminHeaders(String token) {

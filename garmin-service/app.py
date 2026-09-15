@@ -133,15 +133,17 @@ def login():
             prompt_mfa=None,   # MFA not supported in headless mode
         )
         client.login(str(token_dir))
-    except GarminConnectAuthenticationError as e:
-        return _err(f"Authentication failed: {e}", 401)
+    except GarminConnectAuthenticationError:
+        log.warning("Garmin authentication failed for supplied account")
+        return _err("Authentication failed", 401)
     except GarminConnectTooManyRequestsError:
         return _err("Garmin rate-limit reached, try again later", 429)
-    except GarminConnectConnectionError as e:
-        return _err(f"Connection error: {e}", 502)
+    except GarminConnectConnectionError:
+        log.exception("Garmin connection failed during login")
+        return _err("Garmin service unavailable", 502)
     except Exception as e:
         log.exception("Unexpected login error")
-        return _err(f"Login failed: {e}", 500)
+        return _err("Garmin login failed", 500)
 
     token = secrets.token_urlsafe(32)
     _sessions[token] = client
@@ -190,7 +192,7 @@ def activities():
         return _err("Garmin rate-limit reached", 429)
     except Exception as e:
         log.exception("Error fetching activities")
-        return _err(f"Failed to fetch activities: {e}", 502)
+        return _err("Could not fetch Garmin activities", 502)
 
     # Filter to cycling/MTB activities and map to a clean shape
     CYCLING_TYPES = {
@@ -241,7 +243,7 @@ def activity_gpx(activity_id: int):
         return _err("Garmin rate-limit reached", 429)
     except Exception as e:
         log.exception("Error downloading GPX for activity %s", activity_id)
-        return _err(f"Failed to download GPX: {e}", 502)
+        return _err("Could not download Garmin activity", 502)
 
     return app.response_class(
         response=gpx_data,
