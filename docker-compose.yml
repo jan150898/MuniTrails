@@ -7,7 +7,7 @@ services:
       POSTGRES_DB: trails
       POSTGRES_USER: trails_user
       POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
-      POSTGRES_INITDB_ARGS: "-c max_connections=100"
+      POSTGRES_INITDB_ARGS: "-c max_connections=100 -c shared_buffers=256MB -c effective_cache_size=512MB -c work_mem=8MB"
     ports:
       - "5432:5432"
     volumes:
@@ -74,8 +74,8 @@ services:
       test: ["CMD", "java", "-cp", "/app/healthcheck-classes", "com.example.trails.HealthcheckProbe"]
       interval: 30s
       timeout: 10s
-      start_period: 40s
-      retries: 3
+      start_period: 120s
+      retries: 5
     user: "65534:65534"
     deploy:
       resources:

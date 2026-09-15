@@ -9,7 +9,7 @@ import java.util.UUID;
         @Index(name = "idx_gpx_track_name", columnList = "name")
 })
 @Inheritance(strategy = InheritanceType.JOINED)
-@DiscriminatorColumn(name = "track_kind")
+@DiscriminatorColumn(name = "track_type")
 public class GPXTrack {
 
     @Id

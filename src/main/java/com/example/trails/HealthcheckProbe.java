@@ -21,14 +21,24 @@ public final class HealthcheckProbe {
         if (endpoint.getScheme().equalsIgnoreCase("https")) {
             configureLocalHttpsProbe();
         }
-        HttpURLConnection connection = (HttpURLConnection) endpoint.toURL().openConnection();
-        connection.setConnectTimeout(3000);
-        connection.setReadTimeout(3000);
-        connection.setRequestMethod("GET");
-        int status = connection.getResponseCode();
-        if (status < 200 || status >= 300) {
-            throw new IllegalStateException("Health endpoint returned HTTP " + status);
+        Exception lastFailure = null;
+        for (int attempt = 0; attempt < 5; attempt++) {
+            try {
+                HttpURLConnection connection = (HttpURLConnection) endpoint.toURL().openConnection();
+                connection.setConnectTimeout(3000);
+                connection.setReadTimeout(3000);
+                connection.setRequestMethod("GET");
+                int status = connection.getResponseCode();
+                if (status >= 200 && status < 300) {
+                    return;
+                }
+                lastFailure = new IllegalStateException("Health endpoint returned HTTP " + status);
+            } catch (Exception failure) {
+                lastFailure = failure;
+            }
+            Thread.sleep(1000);
         }
+        throw lastFailure;
     }
 
     private static void configureLocalHttpsProbe() throws Exception {
