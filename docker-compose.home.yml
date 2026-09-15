@@ -1,9 +1,9 @@
 services:
   db:
-    ports: []
+    ports: !override []
 
   app:
-    ports:
+    ports: !override
       - "443:8443"
     volumes:
       - ${TLS_KEYSTORE_FILE:?Set TLS_KEYSTORE_FILE}:/run/secrets/trails.p12:ro

@@ -45,5 +45,5 @@ docker compose "${compose_files[@]}" --env-file .env up --build -d
 docker compose "${compose_files[@]}" --env-file .env ps
 
 echo
-echo "Application URL: http://$(hostname -I 2>/dev/null | awk '{print $1}'):${APP_PORT:-8080}"
+echo "Application URL: https://$(hostname -I 2>/dev/null | awk '{print $1}')"
 echo "Follow logs with: docker compose ${compose_files[*]} --env-file .env logs -f app"
