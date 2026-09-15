@@ -67,7 +67,7 @@ exec: "/bin/sh": stat /bin/sh: no such file or directory
 **Garmin Dockerfile Changes:**
 ```dockerfile
 # Before (WRONG - DHI image issue)
-FROM dhi.io/python:3.12-alpine3.23 as base
+FROM python:3.12-alpine3.23 as base
 
 # After (CORRECT - Standard image)
 FROM python:3.12-alpine3.23

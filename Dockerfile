@@ -1,7 +1,7 @@
 # Multi-stage Docker build for production deployment
-# Uses Docker Hardened Images (DHI) for enhanced security
+# Standard Eclipse Temurin and Alpine base images
 
-FROM dhi.io/eclipse-temurin:17-jdk-alpine3.23-dev AS build
+FROM eclipse-temurin:17-jdk-alpine AS build
 WORKDIR /app
 
 # Install Maven
@@ -13,7 +13,7 @@ COPY src ./src
 RUN mvn -q -DskipTests package
 
 # Runtime stage: minimal JRE image
-FROM dhi.io/eclipse-temurin:17.0-alpine3.23
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
 # Copy compiled JAR from build stage
