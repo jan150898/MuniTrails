@@ -34,6 +34,10 @@ import java.util.Map;
 @RequestMapping("/api/v1")
 public class GpxUploadController {
 
+    private static final int MAX_TRACK_NAME_LENGTH = 200;
+    private static final int MAX_DESCRIPTION_LENGTH = 4000;
+    private static final int MAX_SECTIONS_JSON_LENGTH = 100_000;
+
     private final GPXTrackRepository gpxTrackRepository;
     private final UserService userService;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -62,8 +66,25 @@ public class GpxUploadController {
             if (type == null || type.trim().isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Please select a tour type."));
             }
+            if (name != null && name.length() > MAX_TRACK_NAME_LENGTH) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Tour name is too long."));
+            }
+            if (description != null && description.length() > MAX_DESCRIPTION_LENGTH) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Description is too long."));
+            }
+            if (sectionsJson != null && sectionsJson.length() > MAX_SECTIONS_JSON_LENGTH) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Section data is too large."));
+            }
+            try {
+                GPXTrackType.valueOf(type.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Unsupported tour type."));
+            }
             
             User user = userService.getUserByEmail(principal.getName());
+            if (user == null) {
+                user = userService.getUserByUsername(principal.getName());
+            }
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Please sign in again before uploading."));
             }

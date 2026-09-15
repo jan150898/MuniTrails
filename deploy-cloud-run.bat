@@ -14,19 +14,9 @@ echo Service: %SERVICE_NAME%
 echo Region: %REGION%
 echo.
 
-echo OPTION 1: Quick Fix (No Database)
-echo Run this command:
+echo Production deployment requires Cloud SQL. Do not disable Flyway or use an in-memory database.
 echo.
-echo gcloud run services update %SERVICE_NAME% ^
-echo     --region=%REGION% ^
-echo     --set-env-vars="SPRING_FLYWAY_ENABLED=false"
-echo.
-echo Then redeploy:
-echo gcloud run deploy %SERVICE_NAME% --source=. --region=%REGION% --allow-unauthenticated
-echo.
-echo.
-
-echo OPTION 2: With Cloud SQL Database
+echo Configure the database and secrets before deploying:
 echo 1. Find your Cloud SQL instance in Google Cloud Console
 echo 2. Note the Public IP or connection name
 echo 3. Run this command (replace YOUR_IP and YOUR_PASSWORD):
@@ -35,7 +25,8 @@ echo gcloud run services update %SERVICE_NAME% ^
 echo     --region=%REGION% ^
 echo     --set-env-vars="SPRING_DATASOURCE_URL=jdbc:postgresql://YOUR_IP:5432/trails,SPRING_DATASOURCE_USERNAME=postgres,SPRING_DATASOURCE_PASSWORD=YOUR_PASSWORD,SPRING_FLYWAY_ENABLED=true"
 echo.
-echo 4. Then redeploy:
+echo 4. Set GARMIN_SERVICE_URL to the private Garmin service endpoint.
+echo 5. Then redeploy:
 echo gcloud run deploy %SERVICE_NAME% --source=. --region=%REGION% --allow-unauthenticated
 echo.
 echo.

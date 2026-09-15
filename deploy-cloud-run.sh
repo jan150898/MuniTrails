@@ -20,13 +20,8 @@ INSTANCES=$(gcloud sql instances list --project=$PROJECT_ID --format="value(name
 
 if [ -z "$INSTANCES" ]; then
     echo "❌ No Cloud SQL instance found!"
-    echo ""
-    echo "QUICK FIX: Use H2 in-memory database (testing only)"
-    echo "Running: gcloud run services update $SERVICE_NAME --region=$REGION --set-env-vars=SPRING_FLYWAY_ENABLED=false"
-    gcloud run services update $SERVICE_NAME \
-        --region=$REGION \
-        --set-env-vars="SPRING_FLYWAY_ENABLED=false"
-    echo "✓ Flyway disabled"
+    echo "Production deployment stopped. Configure Cloud SQL before deploying."
+    exit 1
 else
     echo "✓ Found Cloud SQL instance(s): $INSTANCES"
     
@@ -53,7 +48,7 @@ else
     echo "Step 2: Updating Cloud Run with database configuration..."
     gcloud run services update $SERVICE_NAME \
         --region=$REGION \
-        --set-env-vars="SPRING_DATASOURCE_URL=jdbc:postgresql://$INSTANCE_IP:5432/trails,SPRING_DATASOURCE_USERNAME=postgres,SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:?Set DB_PASSWORD},APP_ENCRYPTION_KEY=${APP_ENCRYPTION_KEY:?Set APP_ENCRYPTION_KEY},SPRING_FLYWAY_ENABLED=true"
+        --set-env-vars="SPRING_DATASOURCE_URL=jdbc:postgresql://$INSTANCE_IP:5432/trails?sslmode=require,SPRING_DATASOURCE_USERNAME=postgres,SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:?Set DB_PASSWORD},APP_ENCRYPTION_KEY=${APP_ENCRYPTION_KEY:?Set APP_ENCRYPTION_KEY},GARMIN_SERVICE_URL=${GARMIN_SERVICE_URL:?Set GARMIN_SERVICE_URL},GARMIN_SERVICE_AUTH_TOKEN=${GARMIN_SERVICE_AUTH_TOKEN:?Set GARMIN_SERVICE_AUTH_TOKEN},SPRING_FLYWAY_ENABLED=true"
     
     echo "✓ Environment variables set"
 fi

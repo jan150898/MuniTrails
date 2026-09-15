@@ -11,7 +11,7 @@
 
 Choose ONE of these two commands:
 
-### 1️⃣ FOR TESTING (No database needed)
+### 1. Do not use an in-memory database for deployment
 
 ```bash
 gcloud run services update munitrails --region=europe-west1 --set-env-vars="SPRING_FLYWAY_ENABLED=false"
@@ -19,7 +19,7 @@ gcloud run deploy munitrails --source=. --region=europe-west1 --allow-unauthenti
 gcloud run logs read munitrails --region=europe-west1 --limit=50
 ```
 
-**Result:** App starts, but tours won't save (in-memory only)
+The application requires PostgreSQL and Flyway migrations. Disabling Flyway or deploying without a database is not a supported production or staging configuration.
 
 ---
 

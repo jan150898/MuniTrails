@@ -53,6 +53,7 @@ def _rate_limit(client_id):
 # by browsers or other tenants. The Spring application supplies this token on
 # every request; health remains unauthenticated for container probes only.
 SERVICE_AUTH_TOKEN = os.getenv("SERVICE_AUTH_TOKEN", "")
+USE_CLOUD_RUN_IAM = os.getenv("USE_CLOUD_RUN_IAM", "false").lower() == "true"
 
 # In-memory session store: token -> Garmin client
 # Good enough for a single-instance service
@@ -85,8 +86,11 @@ def require_internal_auth():
     if request.content_length and request.content_length > 10 * 1024:
         return _err("Request too large", 413)
     
-    if not SERVICE_AUTH_TOKEN or not secrets.compare_digest(
-            request.headers.get("X-Internal-Service-Token", ""), SERVICE_AUTH_TOKEN):
+    shared_token_valid = SERVICE_AUTH_TOKEN and secrets.compare_digest(
+        request.headers.get("X-Internal-Service-Token", ""), SERVICE_AUTH_TOKEN)
+    cloud_run_identity_present = USE_CLOUD_RUN_IAM and request.headers.get(
+        "Authorization", "").startswith("Bearer ")
+    if not shared_token_valid and not cloud_run_identity_present:
         return _err("service authentication required", 401)
     return None
 

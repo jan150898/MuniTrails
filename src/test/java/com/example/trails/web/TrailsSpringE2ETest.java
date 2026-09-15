@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.*;
@@ -121,6 +122,7 @@ class TrailsSpringE2ETest {
 
     @Test
     @DisplayName("E2E: Analyze GPX without upload")
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
     void testAnalyzeGpxWithoutUpload() throws Exception {
         MockMultipartFile gpxFile = new MockMultipartFile(
                 "file", "analyze.gpx", "application/gpx+xml", validGpxBytes);
@@ -137,6 +139,7 @@ class TrailsSpringE2ETest {
 
     @Test
     @DisplayName("E2E: Section detection on complex GPX")
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
     void testComplexGpxWithSectionDetection() throws Exception {
         // GPX with elevation changes (uphill then downhill)
         byte[] complexGpx = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
@@ -200,6 +203,7 @@ class TrailsSpringE2ETest {
 
     @Test
     @DisplayName("E2E: Invalid GPX file is rejected")
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
     void testInvalidGpxRejection() throws Exception {
         byte[] invalidGpx = "This is not valid XML or GPX".getBytes(StandardCharsets.UTF_8);
         MockMultipartFile file = new MockMultipartFile(
@@ -216,6 +220,7 @@ class TrailsSpringE2ETest {
 
     @Test
     @DisplayName("E2E: GPX with single point is rejected")
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
     void testSinglePointGpxRejection() throws Exception {
         byte[] singlePointGpx = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "<gpx version=\"1.1\" creator=\"Test\">\n" +
@@ -239,6 +244,7 @@ class TrailsSpringE2ETest {
 
     @Test
     @DisplayName("E2E: Empty GPX file is rejected")
+    @WithMockUser(username = "test@example.com", roles = {"USER"})
     void testEmptyGpxRejection() throws Exception {
         byte[] emptyGpx = "".getBytes(StandardCharsets.UTF_8);
         MockMultipartFile file = new MockMultipartFile(
@@ -300,7 +306,7 @@ class TrailsSpringE2ETest {
         double lat = 47.5;
         double lon = 11.5;
         for (int i = 0; i < 500; i++) {
-            largeGpx.append(String.format(
+            largeGpx.append(String.format(Locale.ROOT,
                     "      <trkpt lat=\"%.3f\" lon=\"%.3f\"><ele>%d</ele></trkpt>\n",
                     lat + (i * 0.001), lon + (i * 0.001), 500 + i));
         }

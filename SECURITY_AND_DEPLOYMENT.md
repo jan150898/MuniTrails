@@ -58,8 +58,8 @@ DB_USERNAME=YOUR-SUPABASE-USERNAME
 DB_PASSWORD=YOUR-SUPABASE-PASSWORD
 
 # Encryption & Secrets (GENERATED - Keep private!)
-APP_ENCRYPTION_KEY=377B19D68FC8B959FFA4B825E312C15C7DF7FB20DD58A465B422DE827613AEBD
-GARMIN_SERVICE_AUTH_TOKEN=BF4BAB5D34938E4378FDBC0E76713D0BB180E119634425586C4349C4500918D8
+APP_ENCRYPTION_KEY=<generate-with-openssl-rand-hex-32>
+GARMIN_SERVICE_AUTH_TOKEN=<generate-a-new-random-secret>
 
 # Port mapping
 APP_PORT=8080
@@ -120,6 +120,14 @@ APP_PORT=8080
    ```
 
 ### Google Cloud Run Deployment
+
+For production, deploy both services and configure Secret Manager. The application
+uses a Cloud Run identity token for the private Garmin service; the shared Garmin
+token remains defense-in-depth. Run `setup-gcp-secrets.sh` with the required values
+in the shell environment, then run `deploy-cloud-run-production.sh` with the
+database connection name, database user, and both service accounts configured.
+Do not use the older public-IP/password command examples below for a production
+deployment.
 
 1. **Prerequisites**
    - gcloud CLI configured
