@@ -61,7 +61,9 @@ public class TrackService {
     }
 
     public boolean canRead(GPXTrack track, User user) {
-        return track.getVisibility() == Visibility.PUBLIC || isOwnerOrAdmin(track, user);
+        return isOwnerOrAdmin(track, user)
+                || (track.getStatus() == GPXTrackStatus.PUBLISHED
+                && track.getVisibility() == Visibility.PUBLIC);
     }
 
     public boolean isOwnerOrAdmin(GPXTrack track, User user) {

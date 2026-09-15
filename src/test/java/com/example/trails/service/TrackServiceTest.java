@@ -155,6 +155,27 @@ class TrackServiceTest {
     }
 
     @Test
+    @DisplayName("Only published public tracks are readable by other users")
+    void testPublishedPublicVisibility() {
+        User otherUser = new User();
+        otherUser.setUsername("other_user");
+        otherUser.setPasswordHash(passwordEncoder.encode("password123"));
+        otherUser.setRole("ROLE_USER");
+        otherUser = userRepository.save(otherUser);
+
+        GPXTrack draft = trackService.createTrack(
+                "Draft", GPXTrackType.TOUR, 47.5, 11.5, 1000, 100, 50, testUser);
+        GPXTrack published = trackService.createTrack(
+                "Published", GPXTrackType.TOUR, 47.6, 11.6, 1000, 100, 50, testUser);
+        published.setStatus(GPXTrackStatus.PUBLISHED);
+        gpxTrackRepository.save(published);
+
+        assertTrue(trackService.canRead(draft, testUser));
+        assertFalse(trackService.canRead(draft, otherUser));
+        assertTrue(trackService.canRead(published, otherUser));
+    }
+
+    @Test
     @DisplayName("Filter tracks by distance")
     void testFilterByDistance() {
         trackService.createTrack("Short", GPXTrackType.TOUR, 47.5, 11.5, 5000, 100, 50, testUser);

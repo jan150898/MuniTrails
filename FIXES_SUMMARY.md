@@ -50,7 +50,7 @@ Your TrailsSpring project has been comprehensively updated with security fixes, 
 
 ### Encryption Key (APP_ENCRYPTION_KEY)
 ```
-377B19D68FC8B959FFA4B825E312C15C7DF7FB20DD58A465B422DE827613AEBD
+<generate-with-openssl-rand-hex-32>
 ```
 - 256-bit AES key for encrypting Garmin credentials
 - Format: 64 hexadecimal characters
@@ -58,7 +58,7 @@ Your TrailsSpring project has been comprehensively updated with security fixes, 
 
 ### Garmin Token (GARMIN_SERVICE_AUTH_TOKEN)
 ```
-BF4BAB5D34938E4378FDBC0E76713D0BB180E119634425586C4349C4500918D8
+<generate-a-new-random-secret>
 ```
 - Shared secret between app and Garmin service
 - Must be identical in both services

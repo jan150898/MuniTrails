@@ -9,18 +9,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 public class PasswordEncoderUtil {
     public static void main(String[] args) {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        
-        // Generate hashes for new users
-        String janPassword = "1998Kati";
-        String annaPassword = "MeinMuni";
-        
-        String janHash = encoder.encode(janPassword);
-        String annaHash = encoder.encode(annaPassword);
-        
-        System.out.println("Jan / 1998Kati hash:");
-        System.out.println(janHash);
-        System.out.println();
-        System.out.println("Anna / MeinMuni hash:");
-        System.out.println(annaHash);
+
+        if (args.length == 0) {
+            System.err.println("Usage: PasswordEncoderUtil <password> [<password> ...]");
+            System.exit(1);
+        }
+        for (String password : args) {
+            System.out.println(encoder.encode(password));
+        }
     }
 }
