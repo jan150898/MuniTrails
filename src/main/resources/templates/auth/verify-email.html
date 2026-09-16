@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email - MuniTrails</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .info-text {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .error {
+            color: #e74c3c;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        .form-group.error input {
+            border-color: #e74c3c;
+        }
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        button {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .resend-link {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+        .resend-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .alert {
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .alert-danger {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .alert-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Verify Your Email</h2>
+        <p class="info-text">Enter the 6-digit code sent to your email address</p>
+
+        <div th:if="${message}" class="alert alert-info" th:text="${message}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <form method="post" th:action="@{/auth/verify-email}">
+            <div class="form-group" th:classappend="${#fields.hasErrors('email')} ? 'error' : ''">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" th:value="${email != null} ? ${email} : ${verificationRequest.email}" required readonly>
+                <div class="error" th:each="err : ${#fields.errors('email')}" th:text="${err}"></div>
+            </div>
+
+            <div class="form-group" th:classappend="${#fields.hasErrors('code')} ? 'error' : ''">
+                <label for="code">Verification Code</label>
+                <input type="text" id="code" name="code" placeholder="000000" maxlength="6" pattern="[0-9]{6}" th:value="${verificationRequest.code}" required>
+                <div class="error" th:each="err : ${#fields.errors('code')}" th:text="${err}"></div>
+            </div>
+
+            <!-- Hidden fields for user info (populated from session/form) -->
+            <input type="hidden" name="username" id="username" value="">
+            <input type="hidden" name="password" id="password" value="">
+            <input type="hidden" name="passwordConfirm" id="passwordConfirm" value="">
+
+            <div class="buttons">
+                <button type="submit">Verify & Create Account</button>
+            </div>
+        </form>
+
+        <div class="resend-link">
+            Didn't receive the code? 
+            <form method="post" th:action="@{/auth/resend-code}" style="display: inline;">
+                <input type="hidden" name="email" th:value="${email != null} ? ${email} : ''">
+                <button type="submit" style="background: none; color: #667eea; border: none; padding: 0; cursor: pointer; text-decoration: underline;">Resend</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Auto-format code input to numbers only
+        document.getElementById('code').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6);
+        });
+    </script>
+</body>
+</html>
