@@ -6,6 +6,10 @@ services:
     ports: !override
       - "443:8443"
     volumes:
+      # NOTE: the app container runs as unprivileged UID 65534 (see
+      # docker-compose.yml `user:`), so the host keystore file MUST be
+      # world-readable (chmod 644). With chmod 600 the app fails at startup
+      # with `AccessDeniedException: /run/secrets/trails.p12`.
       - ${TLS_KEYSTORE_FILE:?Set TLS_KEYSTORE_FILE}:/run/secrets/trails.p12:ro
     environment:
       PORT: "8443"

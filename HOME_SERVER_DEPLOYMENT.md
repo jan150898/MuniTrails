@@ -59,7 +59,10 @@ sudo openssl pkcs12 -export \
   -out /opt/trails/secrets/trails.p12 \
   -name trails
 sudo chown "$USER":"$USER" /opt/trails/secrets/trails.p12
-chmod 600 /opt/trails/secrets/trails.p12
+# Must be world-readable (644, NOT 600): the app container runs as
+# unprivileged UID 65534 and otherwise fails at startup with
+# `AccessDeniedException: /run/secrets/trails.p12`.
+chmod 644 /opt/trails/secrets/trails.p12
 ```
 
 Set `TLS_KEYSTORE_FILE=/opt/trails/secrets/trails.p12` and use the export

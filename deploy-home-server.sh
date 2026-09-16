@@ -35,6 +35,18 @@ if [[ ! -f "$keystore_file" ]]; then
   exit 1
 fi
 
+# The app container runs as unprivileged UID 65534 (see `user:` in
+# docker-compose.yml), so the mounted keystore must be world-readable.
+# A chmod-600 file owned by your shell user produces
+# `AccessDeniedException: /run/secrets/trails.p12` at startup.
+keystore_perms="$(stat -c %a "$keystore_file")"
+if (( (8#$keystore_perms & 004) == 0 )); then
+  echo "TLS keystore is not world-readable ($keystore_file has mode $keystore_perms)." >&2
+  echo "The app container runs as UID 65534 and cannot read it." >&2
+  echo "Fix with: chmod 644 \"$keystore_file\"" >&2
+  exit 1
+fi
+
 if ! [[ "$(grep -E '^APP_ENCRYPTION_KEY=' .env | tail -n 1 | cut -d= -f2-)" =~ ^[0-9a-fA-F]{64}$ ]]; then
   echo "APP_ENCRYPTION_KEY must contain exactly 64 hexadecimal characters." >&2
   exit 1
