@@ -37,16 +37,12 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // Wraps the DB authentication provider with a brute-force lockout check.
-    // This is the only AuthenticationProvider bean registered with Spring
-    // Security so that a locked-out email address is rejected before any
-    // password check happens.
     @Bean
-    public AuthenticationProvider authenticationProvider(DbUserDetailsService uds,
+    public AuthenticationProvider authenticationProvider(DbUserDetailsService userDetailsService,
                                                            PasswordEncoder encoder,
                                                            LoginAttemptService loginAttemptService) {
         DaoAuthenticationProvider dao = new DaoAuthenticationProvider();
-        dao.setUserDetailsService(uds);
+        dao.setUserDetailsService(userDetailsService);
         dao.setPasswordEncoder(encoder);
         return new LockoutAwareAuthenticationProvider(dao, loginAttemptService);
     }

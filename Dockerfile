@@ -1,7 +1,7 @@
 # Multi-stage Docker build for production deployment
 # Standard Eclipse Temurin and Alpine base images
 
-FROM eclipse-temurin:17-jdk-alpine AS build
+FROM eclipse-temurin:21-jdk-alpine AS build
 WORKDIR /app
 
 # Install Maven
@@ -13,7 +13,7 @@ COPY src ./src
 RUN mvn -q -DskipTests package
 
 # Runtime stage: minimal JRE image
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Copy compiled JAR from build stage

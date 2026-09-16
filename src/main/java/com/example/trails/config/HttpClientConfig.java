@@ -1,7 +1,6 @@
 package com.example.trails.config;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -23,19 +22,16 @@ public class HttpClientConfig {
     private String garminServiceAudience;
 
     @Bean
-    public RestTemplate restTemplate(RestTemplateBuilder builder) throws Exception {
-        RestTemplateBuilder configured = builder
-                .setConnectTimeout(Duration.ofSeconds(30))    // 30 seconds - Garmin can be slow
-                .setReadTimeout(Duration.ofSeconds(60))       // 60 seconds - GPX download may take time
-                .requestFactory(this::clientHttpRequestFactory);
+    public RestTemplate restTemplate() throws Exception {
+        RestTemplate restTemplate = new RestTemplate(clientHttpRequestFactory());
         if (useIdentityToken) {
             if (garminServiceAudience.isBlank()) {
                 throw new IllegalStateException("garmin.service.audience is required when identity-token authentication is enabled");
             }
-            configured = configured.additionalInterceptors(
+            restTemplate.getInterceptors().add(
                     new GarminIdentityTokenInterceptor(garminServiceAudience));
         }
-        return configured.build();
+        return restTemplate;
     }
 
     private ClientHttpRequestFactory clientHttpRequestFactory() {
