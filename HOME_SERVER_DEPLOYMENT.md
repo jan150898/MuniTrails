@@ -118,3 +118,60 @@ git pull
 
 Flyway migrations run when the application starts. Keep a database backup
 before updates that include schema changes.
+
+## 8. CI/CD with GitHub Actions
+
+The repository contains two workflows in `.github/workflows/`:
+
+- **`ci.yml`** runs on every push and pull request: Maven build and tests
+  (H2 in-memory, JDK 17), a syntax/import check for the Garmin service, and
+  Docker image builds for both the application and the Garmin service.
+- **`deploy-home.yml`** runs automatically on pushes to `main` that touch the
+  application, Docker, or deployment files (and can also be triggered manually
+  from the Actions tab). It archives the repository, uploads the archive over
+  SSH, extracts it into the server directory, runs `./deploy-home-server.sh`,
+  and prints an HTTPS health-check result.
+
+### Required GitHub repository secrets
+
+Set these in **Settings → Secrets and variables → Actions**:
+
+| Secret | Description |
+| ------ | ----------- |
+| `HOMESERVER_HOST` | SSH address of the home server (IP or hostname) |
+| `HOMESERVER_USER` | SSH user (must be in the `docker` group) |
+| `HOMESERVER_SSH_KEY` | Private SSH key (see below) |
+| `HOMESERVER_PORT` | *Optional.* SSH port, defaults to `22` |
+| `HOMESERVER_PATH` | *Optional.* Server directory, defaults to `/opt/trails` |
+
+### Create a deploy key
+
+On the server, add a dedicated key so GitHub Actions can connect:
+
+```bash
+ssh-keygen -t ed25519 -a 100 -f ~/.ssh/deploy-key -N ""
+cat ~/.ssh/deploy-key.pub >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+```
+
+Then copy the private key into the `HOMESERVER_SSH_KEY` secret:
+
+```bash
+cat ~/.ssh/deploy-key
+```
+
+### Network note
+
+GitHub Actions runs from GitHub's public IP range. Your home server must be
+reachable on the SSH port from the internet (key-only auth, never passwords),
+or the workflow must target a tunnel or VPN endpoint such as a Tailscale node.
+Do not open port 443 or 8080 of the application to the internet; keep the app
+LAN-only as described in [Firewall](#5-firewall).
+
+### Manual deployment
+
+Trigger the `Deploy home server` workflow from the **Actions** tab with the
+"Run workflow" button, or push a commit to `main`.
+
+The deployment directory keeps its existing `.env` and database volume. Only
+tracked repository files are replaced.

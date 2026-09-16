@@ -1,0 +1,68 @@
+name: Deploy home server
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - 'docker-compose.home.yml'
+      - 'garmin-service/**'
+      - 'db/**'
+      - 'deploy-home-server.sh'
+      - '.env.example'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-home
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to home server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require deployment secrets
+        if: ${{ !secrets.HOMESERVER_HOST || !secrets.HOMESERVER_USER || !secrets.HOMESERVER_SSH_KEY }}
+        run: |
+          echo "::error::Set HOMESERVER_HOST, HOMESERVER_USER and HOMESERVER_SSH_KEY in the repository secrets (see HOME_SERVER_DEPLOYMENT.md)."
+          exit 1
+
+      - name: Pack deploy archive
+        run: tar -czf trails-deploy.tar.gz --exclude='.git' --exclude='.agents' --exclude='target' .
+
+      - name: Upload archive to home server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOMESERVER_HOST }}
+          port: ${{ secrets.HOMESERVER_PORT || '22' }}
+          username: ${{ secrets.HOMESERVER_USER }}
+          key: ${{ secrets.HOMESERVER_SSH_KEY }}
+          source: trails-deploy.tar.gz
+          target: ${{ secrets.HOMESERVER_PATH || '/opt/trails' }}
+
+      - name: Extract and deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HOMESERVER_HOST }}
+          port: ${{ secrets.HOMESERVER_PORT || '22' }}
+          username: ${{ secrets.HOMESERVER_USER }}
+          key: ${{ secrets.HOMESERVER_SSH_KEY }}
+          envs: HOMESERVER_PATH
+          script: |
+            set -eu
+            cd "$HOMESERVER_PATH"
+            tar -xzf trails-deploy.tar.gz
+            rm -f trails-deploy.tar.gz
+            ./deploy-home-server.sh
+            status=$(curl -k -s -o /dev/null -w '%{http_code}' --connect-timeout 15 --max-time 30 https://localhost/actuator/health || true)
+            echo "Home-server health check returned HTTP ${status:-unreachable}"
+        env:
+          HOMESERVER_PATH: ${{ secrets.HOMESERVER_PATH || '/opt/trails' }}
