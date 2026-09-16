@@ -52,9 +52,15 @@ public class AuthController {
 
         try {
             registrationService.registerUser(registrationRequest);
-            redirectAttributes.addFlashAttribute("message", 
+            redirectAttributes.addFlashAttribute("message",
                 "Registration successful! A verification code has been sent to " + registrationRequest.getEmail());
+            // Carry the registration data into the verification step so the
+            // user does not have to re-enter anything (consumed by the GET
+            // handler and the template's hidden fields).
             redirectAttributes.addFlashAttribute("email", registrationRequest.getEmail());
+            redirectAttributes.addFlashAttribute("username", registrationRequest.getUsername());
+            redirectAttributes.addFlashAttribute("password", registrationRequest.getPassword());
+            redirectAttributes.addFlashAttribute("passwordConfirm", registrationRequest.getPasswordConfirm());
             return "redirect:/auth/verify-email";
         } catch (IllegalArgumentException e) {
             bindingResult.rejectValue("email", "error.registration", e.getMessage());
@@ -74,6 +80,11 @@ public class AuthController {
     public String showVerificationForm(
             @RequestParam(required = false) String email,
             Model model) {
+        // Prefer the query parameter (resend flow); fall back to the flash
+        // attribute set by the registration redirect.
+        if ((email == null || email.isEmpty()) && model.containsAttribute("email")) {
+            email = (String) model.getAttribute("email");
+        }
         VerificationRequest verificationRequest = new VerificationRequest();
         if (email != null && !email.isEmpty()) {
             verificationRequest.setEmail(email);

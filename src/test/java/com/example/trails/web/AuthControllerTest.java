@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
@@ -151,5 +152,38 @@ class AuthControllerTest {
         mockMvc.perform(get("/auth/verify-email"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("auth/verify-email"));
+    }
+
+    @Test
+    void testVerificationFormPrefillsEmailFromQueryParameter() throws Exception {
+        mockMvc.perform(get("/auth/verify-email").param("email", "prefill@example.com"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("prefill@example.com")));
+    }
+
+    @Test
+    void testRegistrationCarriesEmailAndCredentialsToVerificationPage() throws Exception {
+        MvcResult registerResult = mockMvc.perform(post("/auth/register")
+                .param("username", "flowuser")
+                .param("email", "flow@example.com")
+                .param("password", "securepass123")
+                .param("passwordConfirm", "securepass123")
+                .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/auth/verify-email"))
+                .andExpect(flash().attribute("email", "flow@example.com"))
+                .andExpect(flash().attribute("username", "flowuser"))
+                .andReturn();
+
+        // Follow the redirect within the same session so the flash attributes
+        // are consumed, then verify the rendered form is prefilled.
+        jakarta.servlet.http.Cookie sessionCookie =
+                registerResult.getResponse().getCookie("SESSION");
+        if (sessionCookie != null) {
+            mockMvc.perform(get("/auth/verify-email").cookie(sessionCookie))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("flow@example.com")))
+                    .andExpect(content().string(containsString("flowuser")));
+        }
     }
 }
