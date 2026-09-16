@@ -104,9 +104,9 @@ public class RegistrationService {
 
         // Create user account
         User user = new User();
-        user.setId(UUID.randomUUID());
         user.setUsername(originalRequest.getUsername());
-        user.setPassword(passwordEncoder.encode(originalRequest.getPassword()));
+        user.setPasswordHash(passwordEncoder.encode(originalRequest.getPassword()));
+        user.setEmail(email);
         user.setRole("USER");
         userRepository.save(user);
 
