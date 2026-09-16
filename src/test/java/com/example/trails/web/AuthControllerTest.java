@@ -8,12 +8,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -22,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Tests for AuthController registration and verification endpoints
  */
 @SpringBootTest
+@ActiveProfiles("test")
 @AutoConfigureMockMvc
 class AuthControllerTest {
 
@@ -53,7 +56,8 @@ class AuthControllerTest {
                 .param("username", "testuser")
                 .param("email", "test@example.com")
                 .param("password", "securepass123")
-                .param("passwordConfirm", "securepass123"))
+                .param("passwordConfirm", "securepass123")
+                .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/auth/verify-email"));
 
@@ -71,7 +75,8 @@ class AuthControllerTest {
                 .param("username", "")
                 .param("email", "test@example.com")
                 .param("password", "securepass123")
-                .param("passwordConfirm", "securepass123"))
+                .param("passwordConfirm", "securepass123")
+                .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("auth/register"))
                 .andExpect(model().hasErrors());
@@ -83,7 +88,8 @@ class AuthControllerTest {
                 .param("username", "testuser")
                 .param("email", "not-an-email")
                 .param("password", "securepass123")
-                .param("passwordConfirm", "securepass123"))
+                .param("passwordConfirm", "securepass123")
+                .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("auth/register"))
                 .andExpect(model().hasErrors());
@@ -95,7 +101,8 @@ class AuthControllerTest {
                 .param("username", "testuser")
                 .param("email", "test@example.com")
                 .param("password", "short")
-                .param("passwordConfirm", "short"))
+                .param("passwordConfirm", "short")
+                .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("auth/register"))
                 .andExpect(model().hasErrors());
@@ -107,7 +114,8 @@ class AuthControllerTest {
                 .param("username", "testuser")
                 .param("email", "test@example.com")
                 .param("password", "securepass123")
-                .param("passwordConfirm", "differentpass123"))
+                .param("passwordConfirm", "differentpass123")
+                .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("auth/register"));
     }
@@ -121,7 +129,8 @@ class AuthControllerTest {
                 .param("username", "existing")
                 .param("email", "new@example.com")
                 .param("password", "securepass123")
-                .param("passwordConfirm", "securepass123"))
+                .param("passwordConfirm", "securepass123")
+                .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("auth/register"))
                 .andExpect(model().hasErrors())

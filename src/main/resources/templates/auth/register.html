@@ -119,7 +119,7 @@
 
         <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
-        <form method="post" th:action="@{/auth/register}">
+        <form method="post" th:action="@{/auth/register}" th:object="${registrationRequest}">
             <div class="form-group" th:classappend="${#fields.hasErrors('username')} ? 'error' : ''">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" th:value="${registrationRequest.username}" required>

@@ -41,6 +41,11 @@ public class AuthController {
             Model model,
             RedirectAttributes redirectAttributes) {
 
+        if (registrationRequest.getPassword() != null
+                && !registrationRequest.getPassword().equals(registrationRequest.getPasswordConfirm())) {
+            bindingResult.rejectValue("passwordConfirm", "error.passwordMismatch", "Passwords do not match");
+        }
+
         if (bindingResult.hasErrors()) {
             return "auth/register";
         }
@@ -69,10 +74,11 @@ public class AuthController {
     public String showVerificationForm(
             @RequestParam(required = false) String email,
             Model model) {
-        model.addAttribute("verificationRequest", new VerificationRequest());
+        VerificationRequest verificationRequest = new VerificationRequest();
         if (email != null && !email.isEmpty()) {
-            model.addAttribute("email", email);
+            verificationRequest.setEmail(email);
         }
+        model.addAttribute("verificationRequest", verificationRequest);
         return "auth/verify-email";
     }
 
