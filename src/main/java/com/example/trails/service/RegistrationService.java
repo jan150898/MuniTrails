@@ -51,7 +51,7 @@ public class RegistrationService {
         }
 
         // Check if email is already registered
-        if (userRepository.findByUsername(request.getEmail()).isPresent()) {
+        if (userRepository.findByEmailIgnoreCase(request.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email already registered");
         }
 
@@ -60,8 +60,10 @@ public class RegistrationService {
             if (!token.isExpired()) {
                 throw new IllegalArgumentException("Verification already in progress for this email. Check your inbox or wait 15 minutes.");
             }
-            // Delete expired token
+            // Delete expired token and flush immediately so the subsequent
+            // insert does not collide with the unique email constraint.
             verificationTokenRepository.delete(token);
+            verificationTokenRepository.flush();
         });
 
         // Generate 6-digit verification code

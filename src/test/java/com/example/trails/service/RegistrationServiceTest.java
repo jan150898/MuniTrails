@@ -124,7 +124,7 @@ class RegistrationServiceTest {
 
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.empty());
         User existingUser = new User();
-        when(userRepository.findByUsername("existing@example.com")).thenReturn(Optional.of(existingUser));
+        when(userRepository.findByEmailIgnoreCase("existing@example.com")).thenReturn(Optional.of(existingUser));
 
         assertThrows(IllegalArgumentException.class, () -> {
             registrationService.registerUser(request);
